@@ -1,0 +1,43 @@
+# NON-PRODUCTION EXAMPLE — Thresholds and dry-run settings
+
+version: "1.0.0-example"
+status: non_production_example
+
+modes:
+  dry_run_default: true
+  live_mode: false
+  allow_source_retirement: false
+  allow_delete: false
+  allow_overwrite_protected_vaults: false
+
+confidence:
+  auto_propose_minimum: 0.90
+  sensitive_identity_minimum: 0.98
+  manual_review_below: 0.90
+
+hashing:
+  algorithm_candidate: "sha256"
+  note: "Final algorithm is an open decision; sha256 is the provisional recommendation."
+
+batching:
+  max_batch_size: 100
+  stop_on_hash_mismatch: true
+  stop_on_collision_rate_percent: 5
+  stop_on_error_rate_percent: 2
+  free_space_critical_percent: 10
+
+pilot:
+  require_copied_pilot_before_live: true
+  require_rollback_drill: true
+
+paths:
+  fixture_source_root: "/fixtures/source/"
+  fixture_destination_root: "/fixtures/destination/"
+  fixture_control_root: "/fixtures/destination/00_MIGRATION_CONTROL/"
+
+sentinel:
+  may_alert: true
+  may_request_safe_predefined_job: true
+  may_authorize_destructive_work: false
+  may_classify: false
+  may_mutate_files: false

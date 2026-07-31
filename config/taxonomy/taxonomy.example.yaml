@@ -1,0 +1,115 @@
+# NON-PRODUCTION EXAMPLE — Destination Taxonomy
+# Synthetic paths only. Not authorization to create live folders.
+
+version: "1.0.0-example"
+status: non_production_example
+root: "/fixtures/destination/"
+
+shares:
+  - id: migration_control
+    path: "00_MIGRATION_CONTROL"
+    sensitive: false
+    protected_from_overwrite: false
+    purpose: "Manifests, reports, unresolved, logs, configs, database"
+
+  - id: private_vault
+    path: "01_PRIVATE_VAULT"
+    sensitive: true
+    protected_from_overwrite: true
+    purpose: "Existing private material; never overwrite by default"
+
+  - id: family_vault
+    path: "02_FAMILY_VAULT"
+    sensitive: true
+    protected_from_overwrite: true
+    purpose: "Family media and related archives"
+
+  - id: intel_vault
+    path: "03_INTEL_VAULT"
+    sensitive: true
+    protected_from_overwrite: true
+    purpose: "Intelligence / research materials"
+
+  - id: data_vault
+    path: "04_DATA_VAULT"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "Structured and semi-structured data"
+
+  - id: backups
+    path: "05_BACKUPS"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "Backup holdings; not a classification dump target"
+
+  - id: core
+    path: "10_CORE"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "Core system / durable library content"
+
+  - id: drone
+    path: "30_DRONE"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "Drone media"
+
+  - id: makerlab
+    path: "40_MAKERLAB"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "Maker / fabrication projects"
+
+  - id: media
+    path: "50_MEDIA"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "General media library"
+
+  - id: business
+    path: "60_BUSINESS"
+    sensitive: true
+    protected_from_overwrite: true
+    purpose: "Business documents and assets"
+
+  - id: personal
+    path: "70_PERSONAL"
+    sensitive: true
+    protected_from_overwrite: true
+    purpose: "Personal non-vault materials"
+
+  - id: archive
+    path: "80_ARCHIVE"
+    sensitive: false
+    protected_from_overwrite: true
+    purpose: "Cold archive of completed structures and evidence"
+
+  - id: project
+    path: "90_Project"
+    sensitive: false
+    protected_from_overwrite: false
+    purpose: "Project workspaces; intended location includes nas-intelligence-platform"
+
+categories:
+  dogs:
+    canonical: "02_FAMILY_VAULT/Dogs"
+    aliases: ["dog", "dogs", "canine"]
+  unresolved_media:
+    canonical: "00_MIGRATION_CONTROL/05_Unresolved/Unknown-Media"
+  unresolved_documents:
+    canonical: "00_MIGRATION_CONTROL/05_Unresolved/Unknown-Documents"
+  unresolved_data:
+    canonical: "00_MIGRATION_CONTROL/05_Unresolved/Unknown-Data"
+  needs_manual_review:
+    canonical: "00_MIGRATION_CONTROL/05_Unresolved/Needs-Manual-Review"
+
+unresolved_destinations:
+  - "00_MIGRATION_CONTROL/05_Unresolved/Unknown-Data"
+  - "00_MIGRATION_CONTROL/05_Unresolved/Unknown-Documents"
+  - "00_MIGRATION_CONTROL/05_Unresolved/Unknown-Media"
+  - "00_MIGRATION_CONTROL/05_Unresolved/Needs-Manual-Review"
+
+extension_strategy: |
+  File format is an early routing dimension, not necessarily the final semantic destination.
+  CSV/JSON/Markdown/documents/images/videos/archives/application/unknown may use different analyzers.
+  Do not assume one universal folder tree fits every file type.

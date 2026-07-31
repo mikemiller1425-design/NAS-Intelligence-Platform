@@ -1,0 +1,44 @@
+# NON-PRODUCTION EXAMPLE — Inventory exclusions and protected destinations
+
+version: "1.0.0-example"
+status: non_production_example
+
+source_roots_example:
+  - "/fixtures/source/00_Consolidation_Source/From_Downloads"
+  - "/fixtures/source/00_Consolidation_Source/External_Drives"
+  - "/fixtures/source/00_Consolidation_Source/iPhone"
+  - "/fixtures/source/00_Consolidation_Source/Mac"
+  - "/fixtures/source/00_Consolidation_Source/Manual_Drops"
+  - "/fixtures/source/00_Consolidation_Source/Original_Folder_Structure"
+  - "/fixtures/source/00_Consolidation_Source/Unknown_Source"
+
+exclude_path_patterns:
+  - "**/.DS_Store"
+  - "**/@eaDir/**"
+  - "**/#recycle/**"
+  - "**/.Snapshot/**"
+  - "**/Thumbs.db"
+  - "**/.git/**"
+  - "**/node_modules/**"
+
+exclude_synology_system_folders:
+  - "@eaDir"
+  - "#recycle"
+  - "@tmp"
+  - "@sharebin"
+
+protected_destinations:
+  - path: "/fixtures/destination/01_PRIVATE_VAULT"
+    allow_overwrite: false
+    require_explicit_opt_in: true
+  - path: "/fixtures/destination/02_FAMILY_VAULT"
+    allow_overwrite: false
+    require_explicit_opt_in: true
+  - path: "/fixtures/destination/03_INTEL_VAULT"
+    allow_overwrite: false
+    require_explicit_opt_in: true
+
+symlink_policy: skip_and_record
+package_bundle_policy: treat_as_directory_with_bundle_flag
+hidden_files_policy: inventory_and_flag
+permission_error_policy: record_unresolved_do_not_fail_silently

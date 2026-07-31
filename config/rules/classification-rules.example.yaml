@@ -1,0 +1,131 @@
+# NON-PRODUCTION EXAMPLE — Classification Rules
+# Do not point this file at live NAS shares.
+# Paths are synthetic fixtures only.
+# Rules marked provisional require operator confirmation.
+
+version: "1.0.0-example"
+effective_date: "2026-07-31"
+status: non_production_example
+evaluation_order:
+  - safety_exclusions
+  - exact_duplicate_status
+  - high_certainty_source_metadata
+  - explicit_path_or_filename_rules
+  - deterministic_file_type_rules
+  - content_or_ai_assisted_rules
+  - sensitive_identity_rules_requiring_confirmation
+  - unresolved_fallback
+
+conflict_resolution:
+  - higher_priority_deterministic
+  - lower_priority_deterministic
+  - high_confidence_content
+  - lower_confidence_inference
+  - manual_review
+
+defaults:
+  on_conflict: manual_review
+  on_low_confidence: manual_review
+  require_explanation: true
+  dry_run_only: true
+
+rules:
+  - id: SAFE-001-unreadable
+    priority: 1000
+    enabled: true
+    version: "1"
+    effective_date: "2026-07-31"
+    applicable_file_types: ["*"]
+    conditions:
+      readability: unreadable_or_corrupt
+    destination: "/fixtures/destination/00_MIGRATION_CONTROL/05_Unresolved/Needs-Manual-Review"
+    confidence_threshold: 1.0
+    review_required: true
+    explanation_template: "File could not be read or parsed; routed to unresolved."
+    fallback: preserve_source
+    exclusions: []
+
+  - id: MEDIA-100-dogs
+    priority: 100
+    enabled: true
+    version: "1"
+    effective_date: "2026-07-31"
+    status: provisional
+    applicable_file_types: ["image", "video"]
+    source_constraints:
+      roots: ["/fixtures/source/"]
+    metadata_conditions: {}
+    visual_content_conditions:
+      detected_objects_any: ["dog"]
+    confidence_threshold: 0.90
+    exclusions:
+      - protected_vault_overwrite
+    destination: "/fixtures/destination/02_FAMILY_VAULT/Dogs/{capture_year}"
+    review_required: false
+    explanation_template: "Dog detected in media; Dogs domain wins even if people are also present."
+    fallback: manual_review
+    notes: "If a dog and person appear together, Dogs still wins."
+
+  - id: MEDIA-095-drone
+    priority: 95
+    enabled: true
+    version: "1"
+    effective_date: "2026-07-31"
+    status: provisional
+    applicable_file_types: ["image", "video"]
+    metadata_conditions:
+      source_or_metadata_any:
+        - known_drone_camera
+        - drone_folder
+        - drone_filename_pattern
+    confidence_threshold: 0.95
+    destination: "/fixtures/destination/30_DRONE/{capture_year}/{capture_date}"
+    review_required: false
+    explanation_template: "Drone camera/metadata/path signal matched."
+    fallback: manual_review
+
+  - id: DATA-080-csv
+    priority: 80
+    enabled: true
+    version: "1"
+    effective_date: "2026-07-31"
+    status: provisional
+    applicable_file_types: ["csv"]
+    metadata_conditions:
+      extensions: [".csv"]
+    confidence_threshold: 0.80
+    destination: "/fixtures/destination/04_DATA_VAULT/Structured/CSV/{capture_year}"
+    review_required: false
+    explanation_template: "CSV extension routed to structured data; follow-up profiling may apply."
+    fallback: manual_review
+    follow_up: profile_structured_data
+
+  - id: MEDIA-050-known-person-candidate
+    priority: 50
+    enabled: false
+    version: "1"
+    effective_date: "2026-07-31"
+    status: provisional_sensitive
+    applicable_file_types: ["image", "video"]
+    visual_content_conditions:
+      person_count: 1
+      identity_signal: single_female_candidate
+    confidence_threshold: 0.98
+    destination: "/fixtures/destination/02_FAMILY_VAULT/People/Needs-Confirmation/{capture_year}"
+    review_required: true
+    explanation_template: "Single-person signal is a candidate only; identity is not certain without stronger evidence and operator confirmation."
+    fallback: manual_review
+    notes: "Disabled by default until identity-recognition policy is approved."
+
+  - id: FALLBACK-000-unresolved
+    priority: 0
+    enabled: true
+    version: "1"
+    effective_date: "2026-07-31"
+    applicable_file_types: ["*"]
+    conditions: {}
+    confidence_threshold: 0.0
+    destination: "/fixtures/destination/00_MIGRATION_CONTROL/05_Unresolved/Needs-Manual-Review"
+    review_required: true
+    explanation_template: "No higher-priority rule produced an accepted destination."
+    fallback: preserve_source

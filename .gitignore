@@ -1,0 +1,68 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# Secrets and credentials — never commit
+**/credentials*
+**/secrets*
+**/*password*
+**/*token*
+**/*.pem
+**/*.key
+!.env.example
+
+# Local operational state (future runtime artifacts)
+data/
+state/
+*.sqlite
+*.sqlite-journal
+*.db
+logs/
+checkpoints/
+manifests/local/
+reports/local/
+
+# NAS mounts and live path caches
+mnt/
+mounts/
+/volume1/
+
+# Test / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Archives that may contain private exports
+*.zip
+*.tar
+*.tar.gz
+!docs/source/**
+
+# Lockfiles intentionally absent until implementation authorization
+# (do not add package-lock.json / poetry.lock / uv.lock until authorized)
