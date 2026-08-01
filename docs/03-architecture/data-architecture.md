@@ -14,7 +14,7 @@ The data architecture is designed for traceability, replayability, and safety. E
 ## Storage Strategy
 - SQLite is the primary query and coordination store for structured state.
 - JSONL manifests are used for append-only evidence, audit trails, and replayable job history.
-- Hashes are stored for exact duplicate detection and copy verification.
+- Hashes are stored for exact duplicate detection and copy **content** verification. Hash equality verifies content only and is never sufficient evidence of preservation or grounds for source retirement; see `docs/02-specification/preservation-model.md`.
 - The system avoids depending on ad hoc mutable blobs for core truth.
 
 ## Data Separation

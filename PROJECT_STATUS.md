@@ -3,23 +3,52 @@
 | Field | Value |
 | --- | --- |
 | Current phase | Blueprint / Foundation Candidate |
-| Foundation status | `1.0-rc1` — awaiting independent architecture and safety audit |
+| Foundation status | `1.0-rc2` — **release candidate.** Audit findings resolved; awaiting independent verification of those resolutions |
+| Foundation 1.0 | **Not approved** |
 | Implementation | **Blocked** |
+| Build Ladder generation | **Not authorized** |
 | Live NAS execution | **Prohibited** |
-| Dry-run engine execution | **Prohibited until implementation authorization** |
-| Last completed milestone | Complete blueprint repository population (`1.0-rc1`) |
-| Next required action | Submit blueprint for independent ChatGPT review |
+| Dry-run engine execution | **Prohibited** — requires gate G4, which is four gates away |
+| Last completed milestone | Resolution of the independent Foundation audit (FND-B001–B003, FND-M001–M005, FND-m001–m004) |
+| Next required action | **Independent verification of the audit resolutions** |
 
-## Open blockers
+## Where things stand
 
-See `docs/05-governance/open-decisions.md` for the full register. Material blockers expected until operator confirmation include:
+The independent audit raised twelve findings: three blockers, five major, four minor. All twelve now carry a recorded resolution in `docs/audits/foundation-v1-audit.md`. **No finding was waived.** One — FND-B003 — is resolved to the limit of what a resolution engineer may decide: the unsafe configuration is now structurally impossible and validation rejects it, but the final Dogs, drone, CSV, and identity classification policy is the operator's decision (OD-012, OD-003) and was deliberately not made here.
 
-- Exact Synology share roots in and out of scope (intended vs confirmed live)
-- Confirmation of destination taxonomy versus proposed taxonomy
-- Confirmation of provisional classification rules (Dogs, identity signals, drone, structured data)
-- Identity-recognition privacy policy
-- Snapshot / recovery readiness confirmation before any live gate
-- Pilot dataset selection
+Foundation remains a **release candidate**. This repository has not been approved as Foundation 1.0, and nothing in it authorizes implementation.
+
+## Authorization gates
+
+Authorization is defined once, in `docs/05-governance/gate-model.md`. Eight gates, each requiring its own dated, operator-signed record:
+
+| Gate | Status |
+| --- | --- |
+| G1 `foundation` | Candidate ready for independent verification |
+| G2 `build_ladder` | Not authorized |
+| G3 `implementation` | Not authorized |
+| G4 `dry_run` | Not authorized — **first gate that touches the real NAS, and only to read** |
+| G5 `pilot` | Not authorized |
+| G6 `live` | Not authorized |
+| G7 `retirement` | Not authorized |
+| G8 `migration_completion` | Not authorized |
+
+**No gate authorizes the next.** Absence of an authorization record is a prohibition, not a gap.
+
+## Open decisions
+
+See `docs/05-governance/open-decisions.md` for the full register. Every decision now carries both a severity and a `blocks_gate` value, and the two are independent.
+
+**No open decision blocks Foundation approval.** The register is grouped by the gate each decision blocks:
+
+| Blocking gate | Decisions |
+| --- | --- |
+| `implementation` | OD-004 hash algorithm · OD-014 migration-control schema · OD-017 report formats · OD-018 alert wording · OD-019 console stack · OD-022 operator authentication |
+| `dry_run` | OD-001 share roots · OD-002 taxonomy freeze · OD-003 identity privacy policy · OD-005 database location · OD-011 derived-artifact privacy · OD-012 Dogs/drone/CSV/identity rules · OD-016 adapter choice |
+| `pilot` | OD-007 pilot dataset · OD-008 batch thresholds |
+| `live` | OD-006 snapshot readiness · OD-009 copy-versus-move · OD-013 confirmed live structure · OD-015 taxonomy edges · OD-020 project path |
+| `retirement` | OD-010 quarantine retention |
+| `migration_completion` | OD-021 completeness criteria |
 
 ## Authoritative source locations
 
@@ -28,13 +57,17 @@ See `docs/05-governance/open-decisions.md` for the full register. Material block
 | Product intent | `docs/00-intent/` |
 | Product scope | `docs/01-product/` |
 | Specifications | `docs/02-specification/` |
-| Architecture & ADRs | `docs/03-architecture/` |
-| Acceptance | `docs/04-acceptance/` |
+| Canonical rule contract | `config/schemas/classification-rule-set.schema.json` |
+| Architecture and ADRs | `docs/03-architecture/` |
+| Foundation acceptance (documentary) | `docs/04-acceptance/foundation-acceptance.md` |
+| V1 acceptance (execution) | `docs/04-acceptance/v1-acceptance.md` |
+| Gate model | `docs/05-governance/gate-model.md` |
 | Governance | `docs/05-governance/` |
 | Operations playbooks | `docs/06-operations/` |
 | Source material | `docs/source/` |
 | Traceability | `docs/migration/` |
-| Audit handoff | `docs/handoffs/001-foundation-audit.md` |
+| Audit and resolutions | `docs/audits/foundation-v1-audit.md` |
+| Handoffs | `docs/handoffs/` |
 | Future concepts | `docs/future-registry/` |
 | Example config | `config/` |
 
@@ -42,11 +75,15 @@ See `docs/05-governance/open-decisions.md` for the full register. Material block
 
 **Not authorized.** Claude Code must not receive Build Ladder or implementation authorization until:
 
-1. Independent ChatGPT review is complete
-2. Findings are recorded in `docs/audits/foundation-v1-audit.md`
-3. All approved BLOCKER and MAJOR findings are resolved
-4. Foundation 1.0 is explicitly approved
+1. Independent verification of the audit resolutions is complete.
+2. Foundation 1.0 is explicitly approved (gate G1).
+3. Build Ladder generation is **separately** authorized (gate G2).
+4. Each implementation rung is **separately** authorized (gate G3).
+
+Steps 2, 3, and 4 are distinct. None of them implies the next.
 
 ## Exact next action
 
-Submit the completed NAS Intelligence Platform blueprint for independent ChatGPT review. Do not hand it to Claude Code until that review is complete and all approved BLOCKER and MAJOR findings are resolved.
+**Independent verification of the audit resolutions at the current commit.**
+
+The verifier should check that every finding has a resolution, that no finding was silently waived, that the canonical rule schema validates its positive example and rejects every negative example for the intended reason, that no document authorizes live NAS access or Build Ladder generation, and that Foundation 1.0 remains unapproved.

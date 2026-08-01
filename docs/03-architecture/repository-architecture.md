@@ -12,7 +12,7 @@ This repository is organized to separate product intent, architecture, executabl
 
 ## Application Boundaries
 - `apps/cli`: operator-facing command surface for inventory, planning, and controlled execution.
-- `apps/review-console`: read-only review UI for approvals and evidence.
+- `apps/review-console`: non-executing decision surface for evidence review and approval intent.
 - `apps/sentinel`: lightweight monitoring and alerting process for the Raspberry Pi.
 
 ## Package Boundaries

@@ -1,5 +1,20 @@
 # Adapter Architecture
 
+> **Adapters publish measured capability descriptors.** Platform behavior is a function of what an
+> adapter *demonstrates it can do*, not of which product it is. This is what lets implementation
+> proceed against fixtures while the live adapter choice (OD-016) remains open.
+>
+> A descriptor covers identity evidence grades, preservation-property support, filename byte
+> transparency, case and normalization sensitivity, timestamp resolution, access-time behavior, path
+> limits, and a per-volume durability class. It is valid **only** if produced by an actual fixture
+> characterization run; hand-written or assumed descriptors are invalid and may not gate any
+> operation. The descriptor id is bound into every approved plan, and a mismatch at execution stops
+> the batch.
+>
+> See `docs/02-specification/file-identity-model.md`,
+> `docs/02-specification/preservation-model.md`, and
+> `docs/02-specification/durability-and-recovery-model.md`.
+
 ## Purpose
 Adapters isolate the platform from direct filesystem assumptions and keep low-level I/O behind explicit boundaries.
 

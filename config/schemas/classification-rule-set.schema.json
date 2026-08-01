@@ -1,0 +1,637 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nas-intelligence-platform.invalid/schemas/classification-rule-set.schema.json",
+  "title": "Classification Rule Set (V1)",
+  "description": "Canonical machine-readable contract for config/rules/*.yaml. schema_version 1 is fixture/pilot only: it structurally excludes live-mode rule sets, structurally prevents provisional rules from producing executable or auto-approved outcomes, and structurally prohibits load-order-, keep-first-, and merge-based conflict resolution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rule_set"],
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "description": "Only version 1 is defined. Any other value must be rejected, not coerced."
+    },
+    "rule_set": { "$ref": "#/$defs/ruleSet" }
+  },
+
+  "$defs": {
+
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
+    },
+
+    "isoDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+
+    "symbolicRootRef": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$",
+      "description": "Symbolic root name resolved from config/examples/thresholds.example.yaml. Literal filesystem paths are structurally rejected here."
+    },
+
+    "openDecisionRef": {
+      "type": "string",
+      "pattern": "^OD-[0-9]{3}$"
+    },
+
+    "ruleId": {
+      "type": "string",
+      "pattern": "^[A-Z]{3,10}-[0-9]{3}-[a-z0-9][a-z0-9-]{1,48}$",
+      "description": "Stable opaque rule identifier. The numeric segment is an ordinal for readability only; it is NOT the priority and must not be interpreted as one."
+    },
+
+    "fixturePath": {
+      "type": "string",
+      "pattern": "^tests/fixtures/rules/[a-z0-9][a-z0-9._/-]{1,180}$",
+      "description": "Repository-relative fixture path. Absolute paths, parent traversal, and live share paths are rejected.",
+      "not": { "pattern": "\\.\\." }
+    },
+
+    "destinationTemplate": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9 ._-]*(/(\\{(capture_year|capture_month|capture_date|source_root|media_kind|document_kind)\\}|[A-Za-z0-9_][A-Za-z0-9 ._-]*))*$",
+      "not": { "pattern": "\\.\\." },
+      "description": "Destination path template RELATIVE to rule_set.destination_root_ref. Leading '/', drive letters, backslashes, UNC prefixes, parent traversal, and unapproved placeholders are structurally rejected."
+    },
+
+    "evidenceType": {
+      "enum": [
+        "path",
+        "parent_path",
+        "filename",
+        "extension",
+        "mime_type",
+        "size_bytes",
+        "timestamps",
+        "content_hash",
+        "readability",
+        "media_metadata",
+        "document_metadata",
+        "structured_data_metadata",
+        "delimiter",
+        "row_count_sample",
+        "duplicate_status",
+        "source_device",
+        "ai_suggestion",
+        "operator_confirmation"
+      ]
+    },
+
+    "predicateField": {
+      "enum": [
+        "path",
+        "parent_path",
+        "filename",
+        "extension",
+        "mime_type",
+        "media_kind",
+        "size_bytes",
+        "modified_at",
+        "created_at",
+        "capture_date",
+        "capture_year",
+        "content_hash",
+        "readability",
+        "duplicate_status",
+        "review_flag",
+        "detected_objects",
+        "person_count",
+        "identity_signal",
+        "source_device",
+        "source_root_ref",
+        "structured_delimiter",
+        "row_count_sample",
+        "ai_label"
+      ]
+    },
+
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "op", "evidence_source"],
+      "properties": {
+        "field": { "$ref": "#/$defs/predicateField" },
+        "op": {
+          "enum": [
+            "equals", "not_equals",
+            "in", "not_in",
+            "any_of", "all_of", "none_of",
+            "prefix", "suffix", "regex",
+            "gte", "gt", "lte", "lt",
+            "present", "absent"
+          ]
+        },
+        "value": {
+          "type": ["string", "number", "boolean", "array"],
+          "items": { "type": ["string", "number", "boolean"] }
+        },
+        "case_sensitive": { "type": "boolean", "default": true },
+        "regex_flavor": { "const": "re2" },
+        "evidence_source": {
+          "enum": [
+            "filesystem",
+            "path",
+            "media_metadata",
+            "document_metadata",
+            "structured_data",
+            "duplicate_index",
+            "ai_suggestion",
+            "operator"
+          ],
+          "description": "Provenance of the fact being tested. AI-sourced predicates can never masquerade as deterministic evidence."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "op": { "enum": ["present", "absent"] } }, "required": ["op"] },
+          "then": { "not": { "required": ["value"] } },
+          "else": { "required": ["value"] }
+        },
+        {
+          "if": { "properties": { "op": { "const": "regex" } }, "required": ["op"] },
+          "then": {
+            "required": ["regex_flavor"],
+            "properties": { "value": { "type": "string", "maxLength": 200 } }
+          }
+        },
+        {
+          "if": { "properties": { "op": { "enum": ["in", "not_in", "any_of", "all_of", "none_of"] } }, "required": ["op"] },
+          "then": { "properties": { "value": { "type": "array", "minItems": 1, "uniqueItems": true } } }
+        },
+        {
+          "if": { "properties": { "op": { "enum": ["gte", "gt", "lte", "lt"] } }, "required": ["op"] },
+          "then": { "properties": { "value": { "type": "number" } } }
+        },
+        {
+          "if": { "properties": { "op": { "enum": ["prefix", "suffix"] } }, "required": ["op"] },
+          "then": { "properties": { "value": { "type": "string", "minLength": 1 } } }
+        }
+      ]
+    },
+
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "description": "Exactly one combinator or leaf per node. Bare YAML sugar such as 'field_prefix:' is not permitted because open-ended key names cannot be validated against additionalProperties:false.",
+      "properties": {
+        "all": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/condition" } },
+        "any": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/condition" } },
+        "none": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/condition" } },
+        "not": { "$ref": "#/$defs/condition" },
+        "predicate": { "$ref": "#/$defs/predicate" },
+        "always": {
+          "const": true,
+          "description": "Unconditional match. Permitted only on a rule in the 'fallback' band."
+        }
+      }
+    },
+
+    "appliesTo": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "media_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["any", "image", "video", "audio", "document", "structured_data", "archive", "application", "unknown"]
+          }
+        },
+        "extensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^\\.[a-z0-9]{1,12}$" }
+        },
+        "source_root_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/symbolicRootRef" }
+        }
+      }
+    },
+
+    "then": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "destination", "destination_authority", "review_state", "explanation_template"],
+      "properties": {
+        "outcome": {
+          "enum": ["propose_destination", "route_to_review"],
+          "description": "propose_destination may become plan-eligible after approval. route_to_review can never become plan-eligible on its own."
+        },
+        "destination": { "$ref": "#/$defs/destinationTemplate" },
+        "destination_authority": {
+          "enum": ["executable_candidate", "advisory_only"],
+          "description": "advisory_only destinations are recorded as evidence of intent and displayed in review, but can never be lifted into an OperationPlan entry."
+        },
+        "review_state": { "enum": ["review_required", "approved"] },
+        "explanation_template": { "type": "string", "minLength": 10, "maxLength": 500 },
+        "fallback": { "enum": ["route_to_review", "preserve_source_and_review"] },
+        "follow_up": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": { "enum": ["profile_structured_data", "request_operator_confirmation", "open_review_item"] }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "outcome": { "const": "route_to_review" } }, "required": ["outcome"] },
+          "then": {
+            "required": ["review_state", "destination_authority"],
+            "properties": {
+              "review_state": { "const": "review_required" },
+              "destination_authority": { "const": "advisory_only" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "destination_authority": { "const": "executable_candidate" } }, "required": ["destination_authority"] },
+          "then": {
+            "required": ["outcome"],
+            "properties": { "outcome": { "const": "propose_destination" } }
+          }
+        }
+      ]
+    },
+
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum"],
+      "properties": {
+        "minimum": { "type": "number", "minimum": 0, "maximum": 1 },
+        "below_minimum_outcome": {
+          "const": "route_to_review",
+          "default": "route_to_review",
+          "description": "A sub-threshold match is always a review candidate. No other behaviour is expressible."
+        }
+      }
+    },
+
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "enum": ["manual_review", "skip"],
+          "description": "Rule-vs-rule disagreement behaviour. 'keep_first' is prohibited because it makes config load order authoritative. 'merge' is prohibited because it fabricates a destination no rule authored. Bare 'version' is prohibited because it conflated rule conflict with destination-path collision; use the separate 'collision' object."
+        },
+        "on_multi_destination": { "const": "manual_review", "default": "manual_review" },
+        "merge_content": {
+          "const": false,
+          "default": false,
+          "description": "Explicit prohibition marker. Content merging of two matched destinations is never permitted in V1."
+        }
+      }
+    },
+
+    "collision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "never_overwrite"],
+      "description": "Destination-PATH collision behaviour at plan time. Entirely distinct from rule-vs-rule conflict. Never used to select a winning rule.",
+      "properties": {
+        "policy": { "enum": ["route_to_review", "skip", "versioned_suffix"] },
+        "never_overwrite": { "const": true },
+        "version_template": {
+          "type": "string",
+          "pattern": "^\\{basename\\}__v\\{collision_index\\}\\{ext\\}$",
+          "description": "Exactly one safe form. The suffix is appended to the new copy; the pre-existing file is never renamed, moved, or replaced."
+        },
+        "max_versions": { "type": "integer", "minimum": 1, "maximum": 99 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "policy": { "const": "versioned_suffix" } }, "required": ["policy"] },
+          "then": { "required": ["version_template", "max_versions"] }
+        },
+        {
+          "if": { "properties": { "policy": { "enum": ["route_to_review", "skip"] } }, "required": ["policy"] },
+          "then": { "not": { "anyOf": [ { "required": ["version_template"] }, { "required": ["max_versions"] } ] } }
+        }
+      ]
+    },
+
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/evidenceType" }
+        },
+        "untrusted": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": { "enum": ["ai_suggestion"] },
+          "description": "Declared untrusted evidence. AI suggestions are untrusted by definition; listing them here is documentation, not a downgrade switch."
+        }
+      }
+    },
+
+    "confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "confirmer_role": { "enum": ["operator", "policy_owner"] }
+      }
+    },
+
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["positive", "negative", "boundary", "conflict", "idempotency"],
+      "properties": {
+        "positive": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fixturePath" } },
+        "negative": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fixturePath" } },
+        "boundary": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fixturePath" } },
+        "conflict": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fixturePath" } },
+        "idempotency": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fixturePath" } }
+      }
+    },
+
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "band", "priority", "kind", "when", "then", "confidence", "conflict", "evidence", "confirmation", "tests"],
+      "properties": {
+        "id": { "$ref": "#/$defs/ruleId" },
+        "status": { "enum": ["proposed", "provisional", "active", "disabled", "retired"] },
+        "band": {
+          "enum": ["safety", "deterministic", "content_inference", "ai_assisted", "fallback"],
+          "description": "Priority band. Bands are compared before priorities; priorities are only compared inside a band."
+        },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "kind": { "enum": ["deterministic", "content_inference", "ai_assisted", "manual_override"] },
+        "description": { "type": "string", "maxLength": 500 },
+        "rationale": { "type": "string", "maxLength": 1000 },
+        "owner": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,40}$" }
+        },
+        "applies_to": { "$ref": "#/$defs/appliesTo" },
+        "privacy_classification": { "enum": ["none", "sensitive_identity", "sensitive_content"] },
+        "policy_ref": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/openDecisionRef" },
+          "description": "Open decisions that must be resolved before this rule may leave provisional status."
+        },
+        "source_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "maxLength": 200 } },
+        "retention_hint": { "type": "string", "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "when": { "$ref": "#/$defs/condition" },
+        "then": { "$ref": "#/$defs/then" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "conflict": { "$ref": "#/$defs/conflict" },
+        "collision": { "$ref": "#/$defs/collision" },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "confirmation": { "$ref": "#/$defs/confirmation" },
+        "tests": { "$ref": "#/$defs/tests" }
+      },
+      "allOf": [
+        {
+          "$comment": "Band/priority band ranges.",
+          "if": { "properties": { "band": { "const": "safety" } }, "required": ["band"] },
+          "then": { "properties": { "priority": { "minimum": 900, "maximum": 1000 }, "kind": { "const": "deterministic" } }, "required": ["priority", "kind"] }
+        },
+        {
+          "if": { "properties": { "band": { "const": "deterministic" } }, "required": ["band"] },
+          "then": { "properties": { "priority": { "minimum": 600, "maximum": 899 }, "kind": { "const": "deterministic" } }, "required": ["priority", "kind"] }
+        },
+        {
+          "if": { "properties": { "band": { "const": "content_inference" } }, "required": ["band"] },
+          "then": { "properties": { "priority": { "minimum": 300, "maximum": 599 }, "kind": { "const": "content_inference" } }, "required": ["priority", "kind"] }
+        },
+        {
+          "if": { "properties": { "band": { "const": "ai_assisted" } }, "required": ["band"] },
+          "then": { "properties": { "priority": { "minimum": 100, "maximum": 299 }, "kind": { "const": "ai_assisted" } }, "required": ["priority", "kind"] }
+        },
+        {
+          "if": { "properties": { "band": { "const": "fallback" } }, "required": ["band"] },
+          "then": { "properties": { "priority": { "minimum": 0, "maximum": 99 }, "kind": { "const": "manual_override" } }, "required": ["priority", "kind"] }
+        },
+        {
+          "$comment": "FND-B003: a provisional rule is structurally incapable of an automatic or executable outcome.",
+          "if": { "properties": { "status": { "const": "provisional" } }, "required": ["status"] },
+          "then": {
+            "required": ["policy_ref", "then", "confirmation", "conflict"],
+            "properties": {
+              "then": {
+                "required": ["outcome", "destination_authority", "review_state"],
+                "properties": {
+                  "outcome": { "const": "route_to_review" },
+                  "destination_authority": { "const": "advisory_only" },
+                  "review_state": { "const": "review_required" }
+                }
+              },
+              "confirmation": { "required": ["required"], "properties": { "required": { "const": true } } },
+              "conflict": { "required": ["mode"], "properties": { "mode": { "const": "manual_review" } } }
+            }
+          }
+        },
+        {
+          "$comment": "Sensitive identity intent can never be active and can never be executable, per V1-ACC-023 / OD-003.",
+          "if": { "properties": { "privacy_classification": { "const": "sensitive_identity" } }, "required": ["privacy_classification"] },
+          "then": {
+            "required": ["status", "policy_ref", "then", "confirmation"],
+            "properties": {
+              "status": { "enum": ["proposed", "provisional", "disabled", "retired"] },
+              "then": {
+                "required": ["outcome", "destination_authority", "review_state"],
+                "properties": {
+                  "outcome": { "const": "route_to_review" },
+                  "destination_authority": { "const": "advisory_only" },
+                  "review_state": { "const": "review_required" }
+                }
+              },
+              "confirmation": { "required": ["required"], "properties": { "required": { "const": true } } }
+            }
+          }
+        },
+        {
+          "$comment": "AI-derived evidence is untrusted: it can never yield an executable destination without operator confirmation.",
+          "if": {
+            "properties": { "evidence": { "required": ["required"], "properties": { "required": { "contains": { "const": "ai_suggestion" } } } } },
+            "required": ["evidence"]
+          },
+          "then": {
+            "required": ["then", "confirmation"],
+            "properties": {
+              "then": { "required": ["outcome", "destination_authority"], "properties": { "outcome": { "const": "route_to_review" }, "destination_authority": { "const": "advisory_only" } } },
+              "confirmation": { "required": ["required"], "properties": { "required": { "const": true } } }
+            }
+          }
+        },
+        {
+          "$comment": "An unconditional match is only legal as the fallback rule.",
+          "if": { "properties": { "when": { "required": ["always"] } }, "required": ["when"] },
+          "then": { "required": ["band"], "properties": { "band": { "const": "fallback" } } }
+        },
+        {
+          "$comment": "A manual-override rule must not silently inherit automatic authority (rule-model.md review semantics).",
+          "if": { "properties": { "kind": { "const": "manual_override" } }, "required": ["kind"] },
+          "then": {
+            "required": ["then"],
+            "properties": { "then": { "required": ["review_state", "destination_authority"], "properties": { "review_state": { "const": "review_required" }, "destination_authority": { "const": "advisory_only" } } } }
+          }
+        },
+        {
+          "$comment": "Confirmation-required rules always resolve to review until an operator approves.",
+          "if": { "properties": { "confirmation": { "required": ["required"], "properties": { "required": { "const": true } } } }, "required": ["confirmation"] },
+          "then": { "required": ["then"], "properties": { "then": { "required": ["review_state"], "properties": { "review_state": { "const": "review_required" } } } } }
+        },
+        {
+          "$comment": "CONTRIBUTING.md: every ACTIVE rule carries positive, negative, boundary, conflict, and idempotency fixtures.",
+          "if": { "properties": { "status": { "const": "active" } }, "required": ["status"] },
+          "then": {
+            "required": ["tests", "rationale", "owner"],
+            "properties": {
+              "tests": {
+                "required": ["positive", "negative", "boundary", "conflict", "idempotency"],
+                "properties": {
+                  "positive": { "minItems": 1 },
+                  "negative": { "minItems": 1 },
+                  "boundary": { "minItems": 1 },
+                  "conflict": { "minItems": 1 },
+                  "idempotency": { "minItems": 1 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Only a safety- or deterministic-band rule may ever be an executable candidate.",
+          "if": { "properties": { "then": { "required": ["destination_authority"], "properties": { "destination_authority": { "const": "executable_candidate" } } } }, "required": ["then"] },
+          "then": {
+            "required": ["status", "band", "collision"],
+            "properties": {
+              "status": { "const": "active" },
+              "band": { "enum": ["safety", "deterministic"] }
+            }
+          }
+        }
+      ]
+    },
+
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["on_conflict", "on_low_confidence", "on_multi_destination", "require_explanation", "dry_run_only", "load_order_significance"],
+      "properties": {
+        "on_conflict": { "const": "manual_review" },
+        "on_low_confidence": { "const": "manual_review" },
+        "on_multi_destination": { "const": "manual_review" },
+        "require_explanation": { "const": true },
+        "dry_run_only": { "const": true },
+        "load_order_significance": {
+          "const": "none",
+          "description": "FND-M005: the order in which rules appear in the file, and the order in which files are loaded, must never influence which rule wins."
+        }
+      }
+    },
+
+    "ruleSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "name", "version", "status", "environment", "destination_root_ref",
+        "owner", "effective_from", "approval_state", "priority_scheme", "defaults", "rules"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^rs-[a-z0-9][a-z0-9-]{2,62}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "version": { "$ref": "#/$defs/semver" },
+        "status": { "enum": ["draft", "reviewed", "approved", "active", "disabled", "superseded", "retired"] },
+        "environment": {
+          "enum": ["fixture", "pilot"],
+          "description": "'live' is deliberately absent from schema_version 1. A live rule set requires a new schema version and a separate governance decision."
+        },
+        "destination_root_ref": { "$ref": "#/$defs/symbolicRootRef" },
+        "owner": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "effective_from": { "$ref": "#/$defs/isoDate" },
+        "approval_state": { "enum": ["none", "requested", "granted", "revoked"] },
+        "priority_scheme": { "const": "banded_v1" },
+        "evaluation_order": {
+          "const": [
+            "safety_exclusions",
+            "exact_duplicate_status",
+            "high_certainty_source_metadata",
+            "explicit_path_or_filename_rules",
+            "deterministic_file_type_rules",
+            "content_or_ai_assisted_rules",
+            "sensitive_identity_rules_requiring_confirmation",
+            "unresolved_fallback"
+          ],
+          "description": "Restated for readability only. The value is pinned; a config cannot reorder pipeline stages."
+        },
+        "conflict_resolution_order": {
+          "const": [
+            "higher_priority_deterministic",
+            "lower_priority_deterministic",
+            "high_confidence_content",
+            "lower_confidence_inference",
+            "manual_review"
+          ],
+          "description": "Restated for readability only. The value is pinned; a config cannot redefine conflict precedence."
+        },
+        "defaults": { "$ref": "#/$defs/defaults" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "source_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "maxLength": 200 } },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/rule" }
+        }
+      },
+      "allOf": [
+        {
+          "$comment": "An active rule set must carry a granted approval.",
+          "if": { "properties": { "status": { "const": "active" } }, "required": ["status"] },
+          "then": { "required": ["approval_state"], "properties": { "approval_state": { "const": "granted" } } }
+        },
+        {
+          "$comment": "A non-approved rule set may not contain any active rule.",
+          "if": { "properties": { "approval_state": { "enum": ["none", "requested", "revoked"] } }, "required": ["approval_state"] },
+          "then": {
+            "properties": {
+              "rules": {
+                "items": {
+                  "properties": {
+                    "then": { "properties": { "destination_authority": { "const": "advisory_only" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

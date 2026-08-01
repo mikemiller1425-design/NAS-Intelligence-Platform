@@ -8,7 +8,13 @@ The duplicate model defines how the platform identifies exact duplicates, separa
 
 ### Exact duplicates
 
-Files with matching approved cryptographic hashes and equivalent byte identity are exact duplicates.
+Files with matching approved cryptographic hashes and equal size are exact duplicates, provided both carry a `hashed_stable` content identity.
+
+> **Hard-link sets are not duplicate groups.** Where link count is authoritative and greater than one, the entries share a single underlying object. Grouping them as exact duplicates and copying them independently would silently multiply the file and destroy link topology, so within-set members are excluded from exact-duplicate grouping. Where link count is unavailable, the platform records `hardlink_detection: unavailable` and must not assert that no hard links exist. See `file-identity-model.md`.
+
+> **Zero-byte files hash identically to one another.** Hash equality on a zero-length file is not redundancy evidence, and such files must not be collapsed into a redundancy recommendation.
+
+> **Byte-identical files may still differ** in extended attributes, ACLs, and resource forks. Hash equality establishes content equivalence only; it never establishes that two entries are interchangeable. See `preservation-model.md`.
 
 ### Near duplicates
 

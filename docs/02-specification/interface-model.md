@@ -47,9 +47,9 @@ Required report classes:
 - rollback readiness
 - final completion certificate
 
-### Operator console
+### Operator console (non-executing decision surface)
 
-A later console may visualize the same records that the CLI and reports already produce.
+A later console may visualize the same records that the CLI and reports already produce. It is a **non-executing decision surface**: read-only toward underlying file data, write-capable only for a bounded set of application-state commands. `docs/03-architecture/review-console-architecture.md` is the authoritative list of those commands.
 
 The console may:
 
@@ -57,12 +57,15 @@ The console may:
 - display charts and status summaries
 - present review queues
 - show batch and checkpoint progress
+- capture operator decision and approval **intent**
 
 The console may not:
 
 - become the sole source of truth
 - authorize mutation by animation
 - hide immutable records behind mutable UI state
+- construct, sign, or self-validate an approval record — the backend mints and binds every approval
+- submit any command that copies, moves, renames, quarantines, retires, overwrites, or deletes file data
 
 ## Required views
 

@@ -35,7 +35,7 @@ Define how Cursor (Repository Blueprint Engineer) or Claude may resolve **approv
 
 - Updated blueprint addressing approved BLOCKER and MAJOR findings
 - Resolution notes linked to finding IDs
-- Remaining open decisions still listed in `open-decisions.md`
+- Remaining open decisions still listed in `docs/05-governance/open-decisions.md`, each carrying a `blocks_gate` value from `docs/05-governance/gate-model.md`
 
 ## Stop condition
 

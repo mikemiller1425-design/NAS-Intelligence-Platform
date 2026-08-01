@@ -10,7 +10,7 @@ Canonical terms for the NAS Intelligence Platform. Prefer these definitions in s
 - **Sentinel**: Raspberry Pi (or equivalent) monitoring component for heartbeats, mounts, space, stalled runs, and alerts; never authorizes destructive work.
 - **Human Operator**: final authority for taxonomy, ambiguity, destructive actions, rollout gates, and policy.
 - **Blueprint**: documentation/design layer before production implementation.
-- **Foundation audit**: independent review required before implementation authorization.
+- **Foundation audit**: independent review required before Foundation approval (gate G1). Foundation approval is one of several separate authorizations; it does not by itself authorize Build Ladder generation or implementation. See `docs/05-governance/gate-model.md`.
 
 ## Sources and destinations
 

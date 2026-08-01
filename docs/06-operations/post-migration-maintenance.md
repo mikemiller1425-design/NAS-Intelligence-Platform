@@ -7,7 +7,11 @@ Define the steady-state maintenance pattern after the initial migration phases a
 - Continuous ingestion remains read-first and approval-bound where required.
 - Maintenance never reintroduces silent overwrite or deletion.
 - Rule changes are versioned and traceable.
-- Source retirement remains gated by hash verification and approval.
+- Source retirement remains gated by hash verification, preservation comparison, and bound approval.
+
+## Authorization required
+
+Maintenance mode is entered only after gate G8 (`migration_completion`) is authorized. Unattended live watchers remain deferred (FR-012) and are not authorized by entering maintenance.
 
 ## Maintenance activities
 - Review new incoming files.

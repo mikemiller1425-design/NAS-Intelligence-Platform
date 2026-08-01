@@ -34,32 +34,76 @@ payload:
   relative_path: "Demo/Incoming/example.jpg"
 ```
 
-## Canonical event families
+## Canonical event vocabulary
 
-### Inventory events
+This section is the **single authority** for event names (audit finding FND-m001). `docs/02-specification/domain-model.md` lists which aggregate emits each event; it does not define new names. Two rules govern the vocabulary:
+
+1. **One event, one name.** No fact may be expressible under two different event names.
+2. **One event, one emitter.** Each event name has exactly one emitting aggregate.
+
+Any name appearing in `domain-model.md` but not below, or below but not in `domain-model.md`, is a defect.
+
+### Source-root events
 
 - `SourceRootProposed`
 - `SourceRootConfirmed`
+- `SourceRootRetired`
+
+### Scan events
+
+- `ScanStarted`
+- `ScanPaused`
+- `ScanResumed`
+- `ScanCheckpointed`
+- `ScanCompleted`
+- `ScanFailed`
+
+### Inventory events
+
 - `FileDiscovered`
 - `FileInventoried`
 - `FileFingerprinted`
+- `FileAnalysisCompleted`
+- `ReviewRequired`
+- `FileApproved`
+- `FileArchived`
+
+### Metadata events
+
 - `MetadataExtractionRequested`
 - `MetadataExtracted`
-- `FileAnalysisCompleted`
-- `InventoryCheckpointWritten`
+- `MetadataValidated`
+- `MetadataSuperseded`
 
-### Classification events
+### Hash events
+
+- `HashCalculationRequested`
+- `HashCalculated`
+- `HashValidated`
+- `HashMismatchDetected`
+
+### Rule events
 
 - `RuleSetCreated`
 - `RuleSetApproved`
 - `RuleSetActivated`
+- `RuleSetDisabled`
+- `RuleSetSuperseded`
 - `ClassificationRuleProposed`
 - `ClassificationRuleReviewed`
 - `ClassificationRuleActivated`
+- `ClassificationRuleDisabled`
+- `ClassificationRuleRetired`
+
+### Classification decision events
+
 - `ClassificationDecisionProposed`
 - `ClassificationDecisionReviewRequested`
+- `ClassificationConflictDetected`
 - `ClassificationDecisionApproved`
 - `ClassificationDecisionRejected`
+
+> There is no `ClassificationProposed` event. It was a second name for `ClassificationDecisionProposed` and has been removed.
 
 ### Duplicate events
 
@@ -82,33 +126,53 @@ payload:
 - `TaxonomyNodeDeprecated`
 - `TaxonomyNodeRetired`
 
+### Approval events
+
+- `ApprovalRequested`
+- `ApprovalGranted`
+- `ApprovalConsumed`
+- `ApprovalRevoked`
+
 ### Operation events
 
 - `OperationPlanDrafted`
 - `OperationPlanApproved`
 - `OperationPlanLocked`
+- `OperationPlanSuperseded`
 - `OperationEntryQueued`
 - `OperationEntryExecuting`
 - `OperationEntryVerified`
 - `OperationEntryFailed`
 
-### Batch and journal events
+### Batch events
 
 - `BatchStarted`
 - `BatchCheckpointed`
 - `BatchPaused`
 - `BatchCompleted`
 - `BatchFailed`
+
+### Journal and checkpoint events
+
 - `JournalEntryAppended`
 - `JournalSealed`
+- `JournalWriteFailed`
+- `JournalReplayCompleted`
+- `CheckpointWritten`
+- `CheckpointSealed`
+- `CheckpointInvalidated`
+
+> There is no `InventoryCheckpointWritten` event. Scan-progress checkpoints emit `ScanCheckpointed`; durable checkpoint records emit `CheckpointWritten`.
 
 ### Verification and reconciliation events
 
 - `VerificationRequested`
+- `VerificationRecorded`
 - `VerificationPassed`
 - `VerificationFailed`
 - `ReconciliationReportDrafted`
 - `ReconciliationReportFinalized`
+- `ReconciliationReportSuperseded`
 
 ### Health and alert events
 

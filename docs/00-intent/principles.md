@@ -4,7 +4,7 @@ These principles are the safety floor for the NAS Intelligence Platform. They ar
 
 ## Core principles (canonical list)
 
-1. **Inventory is read-only.** Discovery and analysis must not mutate source bytes, timestamps intentionally, or directory structure.
+1. **Inventory is read-only.** Discovery and analysis must not mutate source bytes or directory structure. Adapters must declare whether reading updates access time; where the platform cannot suppress that update, it is reported as a declared, counted side effect rather than described as "no mutation". Source-immutability evidence must compare the same property set the preservation model defines — hashes alone cannot detect timestamp, extended-attribute, or permission changes.
 2. **Source files are immutable until an approved retirement stage.** Classification and planning never rewrite originals.
 3. **Copy before delete.** Prefer copy-and-verify; source removal is a separately approved retirement phase.
 4. **No deletion based only on path, filename, or inferred identity.** Exact duplicates require cryptographic hash equality; near-duplicates require review.
@@ -15,7 +15,7 @@ These principles are the safety floor for the NAS Intelligence Platform. They ar
 9. **Every destination collision is explicit.** Conflicting names never overwrite silently.
 10. **Every ambiguity goes to review.** Low confidence and multi-destination conflicts do not auto-resolve into live mutation.
 11. **Every destructive action requires human approval.** Frontend presentation cannot authorize filesystem mutation.
-12. **Hash verification is required before source retirement.** Destination must match expected hash and size.
+12. **Verification is required before source retirement.** The destination must match the expected hash and size, **and** the preservation comparison must pass for every property the effective profile marks required. Hash equality alone never authorizes retirement.
 13. **Snapshots or backups must be confirmed before destructive migration.** Recovery coverage is a live gate, not an assumption.
 14. **Dry-run is the default.** Live mode must be deliberately enabled under a separate readiness gate.
 15. **Live NAS paths must not be hardcoded into unsafe defaults.** Examples use fixture paths; live roots are configured and reviewed.

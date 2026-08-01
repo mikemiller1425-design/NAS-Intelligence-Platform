@@ -1,0 +1,68 @@
+# Maps each negative fixture to the reason it must be rejected.
+# Verified by scripts/validate_rule_config.py.
+absolute-live-destination: Destination templates are relative; absolute live share
+  paths are structurally rejected.
+active-rule-missing-tests: An active rule requires positive, negative, boundary, conflict,
+  and idempotency fixtures.
+active-ruleset-without-approval: An active rule set must carry a granted approval.
+ai-evidence-executable: A rule relying on AI-suggested evidence can never yield an
+  executable destination.
+always-outside-fallback: An unconditional match is legal only in the fallback band.
+bad-rule-id-format: Rule identifiers must match the stable identifier pattern.
+bad-schema-version: Only schema_version 1 is defined; other versions must be rejected,
+  not coerced.
+band-kind-mismatch: Rule kind must match its declared band.
+collision-overwrite-allowed: never_overwrite is pinned true under every collision
+  policy.
+collision-versioned-missing-template: Destination versioning requires an exact version
+  template and a maximum.
+confidence-above-one: Confidence must lie within [0.0, 1.0].
+confidence-negative: Confidence must lie within [0.0, 1.0].
+conflict-mode-keep-first: 'Conflict mode ''keep_first'' is prohibited: it makes configuration
+  load order authoritative.'
+conflict-mode-merge: 'Conflict mode ''merge'' is prohibited: it fabricates a destination
+  no rule authored.'
+conflict-mode-version: 'Bare conflict mode ''version'' is prohibited: destination
+  versioning is a collision policy, not a rule-conflict mode.'
+dry-run-disabled: dry_run_only is pinned true for schema_version 1.
+duplicate-band-priority: 'LOADER: no two rules may share the same band and priority.'
+duplicate-rule-id: 'LOADER: rule identifiers must be unique within a rule set.'
+empty-evidence-list: Required-evidence list must be non-empty.
+empty-rule-set: A rule set must contain at least one rule.
+environment-live: A live rule set is not expressible in schema_version 1.
+executable-in-unapproved-set: An unapproved rule set may not contain an executable
+  rule.
+literal-destination-root: destination_root_ref must be a symbolic name, never a literal
+  path.
+live-fixture-path: Test fixtures must be repository-relative synthetic paths, never
+  live share paths.
+load-order-significant: Configuration load order must never influence which rule wins.
+manual-override-auto-approve: A manual-override rule must not inherit automatic authority.
+merge-content-true: Content merging is never permitted; merge_content is pinned false.
+missing-evidence: Every rule must declare its required evidence.
+parent-traversal-destination: Parent traversal in a destination template is rejected.
+predicate-missing-evidence-source: Every predicate must declare the provenance of
+  the fact it tests.
+predicate-unknown-field: Predicate fields are drawn from a closed vocabulary.
+priority-outside-band: Priority must fall inside its declared band's range.
+provisional-auto-approve: A provisional rule must not express an automatically approved
+  or executable outcome.
+provisional-confirmation-false: A provisional rule must require operator confirmation.
+provisional-missing-policy-ref: A provisional rule must name the open decision that
+  blocks its promotion.
+regex-without-flavor: A regex predicate must pin its regex flavor.
+reordered-conflict-resolution: Conflict-resolution order is pinned and may not be
+  redefined by configuration.
+reordered-evaluation-order: Evaluation order is pinned and may not be reordered by
+  configuration.
+retired-flat-schema: The retired flat rule schema must be rejected wholesale.
+sensitive-identity-active: A sensitive-identity rule may never carry status 'active'.
+two-combinators-one-node: A condition node carries exactly one combinator or leaf.
+two-fallback-rules: 'LOADER: exactly one rule may match unconditionally.'
+unapproved-placeholder: Only approved destination placeholders may be used.
+unknown-field-confidence: Unknown field inside 'confidence' must be rejected (retired
+  'confidence_threshold').
+unknown-field-rule: Unknown field at rule level must be rejected (retired 'enabled'
+  switch).
+unknown-field-ruleset: Unknown field at rule-set level must be rejected (retired 'effective_date').
+unknown-field-then: Unknown field inside 'then' must be rejected (retired 'review_required').

@@ -10,15 +10,21 @@ Years of downloads, device dumps, media, documents, and project files accumulate
 
 ## Current phase
 
-**Blueprint / Foundation Candidate `1.0-rc1` — ready for independent audit**
+**Blueprint / Foundation Candidate `1.0-rc2` — audit findings resolved, awaiting independent verification**
+
+Authorization is defined once, in `docs/05-governance/gate-model.md`. Eight gates, each requiring its own dated, operator-signed record. **No gate authorizes the next**, and absence of an authorization record is a prohibition, not a gap.
 
 | Gate | Status |
 | --- | --- |
-| Blueprint complete | Candidate complete |
-| Independent architecture & safety audit | **Required next** |
-| Implementation | **Blocked** |
-| Dry-run engine | **Prohibited until implementation authorization** |
-| Live NAS execution | **Prohibited** |
+| Independent audit | Complete — twelve findings, all resolved, none waived |
+| Independent verification of resolutions | **Required next** |
+| G1 `foundation` — Foundation 1.0 approval | **Not approved** |
+| G2 `build_ladder` | **Not authorized** |
+| G3 `implementation` (fixture-only) | **Not authorized** |
+| G4 `dry_run` | **Not authorized** — first gate that touches the real NAS, and only to read |
+| G5 `pilot` · G6 `live` · G7 `retirement` · G8 `migration_completion` | **Not authorized** |
+
+**Live NAS execution is prohibited.** Mounting, scanning, copying, moving, renaming, quarantining, retiring, overwriting, and deleting on the Synology NAS are all prohibited at every gate reached so far. Permanent deletion is unavailable in V1 at any gate.
 
 See `FOUNDATION_VERSION.md` and `PROJECT_STATUS.md`.
 
@@ -29,8 +35,8 @@ See `FOUNDATION_VERSION.md` and `PROJECT_STATUS.md`.
 - Copy before delete.
 - Dry-run is the default; live mode must be deliberately enabled.
 - Every proposed move has an explainable reason and a stable operation ID.
-- Every ambiguity goes to review; every destructive action requires human approval.
-- Hash verification is required before source retirement.
+- Every ambiguity goes to review; every destructive action requires a human approval bound to exact plan content, single-use, expiring, and evaluated by the backend.
+- Verification before source retirement requires hash equality **and** a passing preservation comparison; hash equality alone is never sufficient.
 - Protected vaults cannot be overwritten by default.
 - AI classifications are evidence, not unquestionable truth.
 - The Raspberry Pi may monitor and alert; it is **not** the primary heavy-analysis engine.
@@ -78,14 +84,14 @@ After validation — Normalize and deduplicate
 | `docs/02-specification/` | Domain, lifecycle, rules, taxonomy, ops, security |
 | `docs/03-architecture/` | System design, topology, ADRs, testing, observability |
 | `docs/04-acceptance/` | V1, safety, pilot, and live-readiness acceptance |
-| `docs/05-governance/` | Authority, change control, open decisions, DoR/DoD |
+| `docs/05-governance/` | Gate model, authority, change control, open decisions, DoR/DoD |
 | `docs/06-operations/` | Dry-run, pilot, live, rollback, incident, Sentinel |
 | `docs/source/` | Original operator source material |
 | `docs/migration/` | Source inventory, reconciliation, traceability |
 | `docs/handoffs/` | Audit and build-ladder handoffs |
 | `docs/audits/` | Independent audit findings |
 | `docs/future-registry/` | Explicitly deferred concepts |
-| `config/` | Non-production example rules, taxonomy, exclusions |
+| `config/` | Non-production example rules, taxonomy, exclusions, and the canonical rule schema |
 | `apps/` | Future CLI, review console, Sentinel (placeholders) |
 | `packages/` | Future library boundaries (placeholders) |
 | `prompts/` | Reusable audit and implementation prompts |
@@ -108,8 +114,8 @@ See `docs/05-governance/authority-order.md`.
 
 ## Implementation authorization status
 
-**Blocked.** Do not begin production implementation. Do not generate a Build Ladder for Claude Code until Foundation approval after independent review.
+**Blocked.** Do not begin production implementation. Do not generate a Build Ladder. Foundation approval (G1), Build Ladder generation (G2), and each implementation rung (G3) are three separate authorizations; none implies the next.
 
 ## Exact next action
 
-Submit the completed NAS Intelligence Platform blueprint for independent ChatGPT review. Do not hand it to Claude Code until that review is complete and all approved BLOCKER and MAJOR findings are resolved.
+**Independent verification of the audit resolutions at the current commit.** Do not hand this repository to Claude Code for Build Ladder generation until that verification is complete, Foundation 1.0 is explicitly approved, and Build Ladder generation is separately authorized.

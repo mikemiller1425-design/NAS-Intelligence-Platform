@@ -5,16 +5,21 @@ Maps significant source concepts to authoritative active destinations. Status va
 | Source concept | Origin | Authoritative destination | Status |
 | --- | --- | --- | --- |
 | Product mission / fully organized NAS | SRC-001 + assignment | `docs/00-intent/product-intent.md`, `docs/01-product/product-definition.md` | Present |
-| Non-negotiable safety laws | SRC-001 + assignment §5 | `docs/00-intent/principles.md`, ADRs 001–015 | Present |
+| Non-negotiable safety laws | SRC-001 + assignment §5 | `docs/00-intent/principles.md`, ADRs 001–017 | Present |
 | Synology / Mac mini / Pi topology | SRC-001 | `docs/00-intent/role-charter.md`, `docs/03-architecture/execution-topology.md`, ADR-007, ADR-008 | Present |
 | Canonical data zones | SRC-001 | `docs/02-specification/taxonomy-model.md`, `config/taxonomy/` | Provisional |
 | Known `/volume1` share names | Assignment | `docs/02-specification/taxonomy-model.md`, `config/taxonomy/taxonomy.example.yaml`, OD-001/013 | Provisional / Open |
 | Migration-control layout | Assignment + SRC-001 (variant) | `docs/02-specification/taxonomy-model.md`, open decision if structures differ | Open (MERGE) |
 | Inventory model fields | SRC-001 | `docs/02-specification/inventory-model.md`, `docs/02-specification/domain-model.md` | Present |
-| Classification rules as config | SRC-001 + assignment §6 | `docs/02-specification/rule-model.md`, `config/rules/` | Present |
-| Dogs domain precedence | SRC-001 / assignment | `config/rules/classification-rules.example.yaml`, OD-012 | Provisional |
-| Drone routing | SRC-001 | same | Provisional |
-| CSV / structured routing | SRC-001 | same | Provisional |
+| Classification rules as config | SRC-001 + assignment §6 | `config/schemas/classification-rule-set.schema.json` (canonical contract), `docs/02-specification/rule-model.md`, `config/rules/` | Present |
+| File identity and concurrent source change | Audit FND-M001 | `docs/02-specification/file-identity-model.md` | Present |
+| Preservation fidelity | Audit FND-M002 | `docs/02-specification/preservation-model.md` | Present |
+| Durability, crash consistency, recovery | Audit FND-M003 | `docs/02-specification/durability-and-recovery-model.md`, ADR-016 | Present |
+| Approval binding and anti-replay | Audit FND-M004 | `docs/02-specification/approval-binding-model.md`, ADR-017 | Present |
+| Authorization gate model | Audit FND-B001, FND-m003 | `docs/05-governance/gate-model.md`, `docs/04-acceptance/foundation-acceptance.md` | Present |
+| Dogs domain precedence | SRC-001 / assignment | `config/rules/classification-rules.example.yaml`, OD-012 | Provisional — structurally advisory-only until OD-012 closes |
+| Drone routing | SRC-001 | same | Provisional — structurally advisory-only until OD-012 closes |
+| CSV / structured routing | SRC-001 | same | Provisional — structurally advisory-only until OD-012 closes |
 | Sensitive identity candidate | SRC-001 / assignment | disabled example rule + OD-003 / FR-003 | Provisional / Deferred |
 | Unresolved fallback | SRC-001 + assignment | rule model + taxonomy unresolved nodes | Present |
 | Exact duplicate hashing | SRC-001 | `docs/02-specification/duplicate-model.md`, ADR-004 | Present |

@@ -16,7 +16,7 @@ The platform is a safety-first file intelligence system for turning a disorganiz
 The platform is split into four logical domains:
 
 - `apps/cli`: operator entry point for inventory, analysis, proposals, and controlled execution.
-- `apps/review-console`: read-only review and approval surface for human decisions.
+- `apps/review-console`: non-executing decision surface. Read-only toward file data; may submit only the bounded application-state commands listed in `docs/03-architecture/review-console-architecture.md`.
 - `apps/sentinel`: Raspberry Pi-based watcher that monitors and alerts, but never authorizes destructive work.
 - `packages/*`: shared contracts, adapters, persistence, validation, classification, planning, and observability building blocks.
 

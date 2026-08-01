@@ -19,6 +19,12 @@ Define the Raspberry Pi sentinel's read-only monitoring role, alerting behavior,
 - Manual-review backlog.
 - Batch and phase state.
 
+## Authorization required
+
+The Sentinel observes and alerts. It never classifies, approves, or mutates, at any gate.
+
+Running the Sentinel against real infrastructure requires an authorization record for the gate at which it is introduced, per `docs/05-governance/gate-model.md`. Nothing in this document authorizes running it.
+
 ## Actions
 1. Check health signals on a schedule.
 2. Display a read-only status view.

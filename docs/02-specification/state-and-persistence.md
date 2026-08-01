@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document defines the recommended persistence model for the blueprint. It intentionally avoids production schema code while still specifying the state boundaries, storage responsibilities, and recovery guarantees.
+This document defines the persistence model: state boundaries, storage responsibilities, and recovery guarantees. It intentionally avoids production schema code.
+
+> **Authority.** The append-only Execution Journal is authoritative; SQLite is a derived, rebuildable projection. Where they disagree, the journal wins unconditionally. The write protocol, crash-state table, and restart reconciliation algorithm live in `docs/02-specification/durability-and-recovery-model.md`, which governs wherever this document is less specific.
 
 ## Recommendation
 
@@ -26,10 +28,10 @@ Recommended for:
 - review items
 - taxonomy records
 - operation plans
-- approvals
+- approvals (derived index; the authoritative approval is a journal record)
 - verification summaries
 - reconciliation summaries
-- checkpoint pointers
+- checkpoint pointers (derived; the authoritative checkpoint is a journal record pair)
 - current health snapshots
 
 ### JSONL
@@ -55,7 +57,7 @@ Recommended for:
 ## Persistence principles
 
 1. Append-only history is preferred for anything used in audit or recovery.
-2. Mutable current state should be derived from or reconciled against immutable history.
+2. Mutable current state is **derived from** immutable history. It is never a co-equal source of truth, and it is never reconciled *against* history as a peer: on disagreement the history wins and the projection is rebuilt.
 3. A restart must not require trust in partially written records.
 4. Checkpoints must be atomic.
 5. Journal failure stops mutation.
@@ -63,7 +65,7 @@ Recommended for:
 
 ## SQLite state model
 
-SQLite should hold the current durable state for query-heavy objects and pointers to the latest immutable history segments.
+SQLite holds the current **derived** state for query-heavy objects, plus pointers to the latest immutable history segments. It is rebuildable from the journal at any time, without operator approval. No fact required for safety, recovery, reconciliation, audit, or authorization may exist only here.
 
 Recommended tables or logical buckets include:
 
@@ -122,14 +124,14 @@ On startup, the platform should:
 
 If a write is interrupted:
 
-- incomplete records should be ignored or repaired based on atomicity rules
+- a truncated **final** record is discarded, its bytes preserved to a sidecar, and the discard recorded; a corrupt **mid-file** record halts the system and is never repaired or skipped
 - sequence numbers must remain monotonic
 - duplicated event delivery must not create duplicated effects
 - a failed journal write stops mutation until resolved
 
 ### Replay
 
-Replay should rebuild derived state from JSONL streams into SQLite-backed current state where appropriate.
+Replay rebuilds **all** derived state from the journal into SQLite-backed current state. There is no SQLite content that replay cannot reconstruct; if there were, SQLite would hold unique authority, which this model forbids.
 
 Replay must be idempotent and must never authorize new live work.
 

@@ -11,6 +11,12 @@ Validate the full workflow on copied data before any live NAS mutation is author
 - No silent collision handling.
 - Any cleanup proposal remains pending separate approval.
 
+## Authorization required
+
+This playbook describes **how** to run the copied-pilot stage. It does not authorize running it.
+
+Executing anything in this document requires a current, dated, operator-signed authorization record for gate **G5 `pilot`**, per `docs/05-governance/gate-model.md`. Absence of an authorization record is a prohibition, not a gap.
+
 ## Preconditions
 - Dry-run results are reviewed.
 - Fixture tests pass.

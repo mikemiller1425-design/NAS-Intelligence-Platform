@@ -2,6 +2,46 @@
 
 All notable foundation and architectural decisions for the NAS Intelligence Platform are recorded here.
 
+## [1.0-rc2] — 2026-07-31
+
+### Audit resolution
+
+Resolves the twelve findings of the independent Foundation audit of commit `840d72c8`. No finding was waived. Foundation 1.0 is **not** approved by this release; the repository is a release candidate awaiting independent verification of these resolutions.
+
+**Blockers**
+
+- **FND-B001** — Removed the circular Foundation acceptance gate. Foundation approval required all BLOCKER V1 acceptance requirements to pass, but 25 of them could only be verified by running software that was itself blocked until Foundation approval. Added `docs/05-governance/gate-model.md` defining eight independent authorization gates, and `docs/04-acceptance/foundation-acceptance.md` holding only documentary criteria. `v1-acceptance.md` now holds execution-verifiable criteria, each tagged with the gate it blocks, and explicitly blocks no Foundation approval.
+- **FND-B002** — Replaced three incompatible rule vocabularies with one canonical contract at `config/schemas/classification-rule-set.schema.json` (JSON Schema draft 2020-12, unknown-field rejection at every level). Rewrote `rule-model.md` and the example rule set against it; recorded the domain model's field names as an entity projection rather than a second wire format.
+- **FND-B003** — Provisional rules are now **structurally incapable** of automatic execution. The `enabled` switch is gone, `status` is the single activation control, and the schema forces every provisional rule to route to review, be advisory-only, require confirmation, and name the open decision blocking its promotion. The Dogs, drone, CSV, and identity policies remain the operator's decision (OD-012, OD-003).
+
+**Major**
+
+- **FND-M001** — Added `docs/02-specification/file-identity-model.md`: logical identity, evidence grades, a ternary change token in which indeterminate is never treated as equal, per-adapter identity evidence, and an eighteen-row stop/review table covering same-path replacement, concurrent modification, hard links, case-only and Unicode-normalization collisions, and network filesystem limits.
+- **FND-M002** — Added `docs/02-specification/preservation-model.md`: a thirty-property preservation profile matrix by adapter class, content-class overlays for bundles, symlinks, sparse files, and hard-link sets, a capability-mismatch resolution protocol, and a comparison report schema. Corrected every document that implied hash equality proves preservation.
+- **FND-M003** — Added `docs/02-specification/durability-and-recovery-model.md` and `ADR-016`: the journal is authoritative, SQLite is a derived rebuildable projection, with a numbered write protocol carrying a failure branch for every step, a durable intent record before any mutation, a seventeen-row crash-state table, a restart reconciliation algorithm, and an explicit statement of when the next mutation may begin.
+- **FND-M004** — Added `docs/02-specification/approval-binding-model.md` and `ADR-017`: approvals bound to exact subject content, single-use, expiring, revocable, backend-evaluated on every attempt, with a twenty-five-step authorization algorithm and typed rejection codes. Closed the trust-boundary inversion in which the command envelope accepted an authorization status as inbound data.
+- **FND-M005** — Removed `keep_first`, `merge`, and the vague `version` conflict mode. Separated rule conflict from destination collision, which had been conflated. Added priority bands, a specificity algorithm, deterministic tie-breaking, and a pinned prohibition on load-order-determined winners.
+
+**Minor**
+
+- **FND-m001** — Removed the duplicated classification event and reconciled the full event vocabulary; 89 events now match exactly across the domain and event models, with one emitter each.
+- **FND-m002** — Replaced "read-only approval console" with "non-executing decision surface", and enumerated exactly which application-state commands it may submit.
+- **FND-m003** — Separated severity from the gate it blocks; every open decision now carries an independent `blocks_gate` value.
+- **FND-m004** — Reconciled inventory field obligations into one authoritative table with per-adapter conditions.
+
+### Added
+
+- `config/schemas/classification-rule-set.schema.json` — the canonical rule contract
+- `scripts/validate_rule_config.py`, `scripts/generate_negative_rule_fixtures.py`
+- `tests/fixtures/rules/negative/` — 47 rule sets that must fail validation, each with its expected reason
+- `ADR-016`, `ADR-017`
+- `OD-021` migration completeness criteria, `OD-022` operator authentication model
+- Adapter, file-identity, approval-binding, and preservation-comparison rungs to the Build Ladder requirements
+
+### Unchanged
+
+- Implementation remains blocked; Build Ladder generation remains unauthorized; live NAS execution remains prohibited.
+
 ## [1.0-rc1] — 2026-07-31
 
 ### Foundation generation

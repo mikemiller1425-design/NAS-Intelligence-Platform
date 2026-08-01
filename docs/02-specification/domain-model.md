@@ -21,8 +21,8 @@ These invariants apply across all entities unless a narrower entity-level rule i
 9. Execution revalidates source hash, size, and path preconditions.
 10. Destination collisions never overwrite silently.
 11. Existing protected vault content cannot be overwritten by default.
-12. Successful copy or move requires post-operation hash verification.
-13. A source file cannot be retired before destination verification and approved retirement.
+12. Successful copy or move requires post-operation hash verification **and** a preservation comparison against the effective preservation profile. Hash equality alone is never sufficient.
+13. A source file cannot be retired before destination verification, a passing preservation comparison, and approved retirement.
 14. Permanent deletion is unavailable in V1.
 15. Exact duplicates require cryptographic hash equality; a duplicate decision cannot rely on filename alone.
 16. Repeated events and reruns are idempotent; retrying cannot create duplicate destination copies.
@@ -162,12 +162,12 @@ See `lifecycle-model.md`.
 - `FileDiscovered`
 - `FileInventoried`
 - `FileFingerprinted`
-- `MetadataExtracted`
 - `FileAnalysisCompleted`
-- `ClassificationProposed`
 - `ReviewRequired`
 - `FileApproved`
 - `FileArchived`
+
+> `MetadataExtracted` is emitted by `MetadataRecord`, not by `FileRecord`. `ClassificationDecisionProposed` is emitted by `ClassificationDecision`, not by `FileRecord`. Each event has exactly one emitting aggregate; see `docs/02-specification/event-model.md`.
 
 ### V1 limits
 
@@ -320,7 +320,7 @@ Captures a hash or checksum of file bytes for exact duplicate detection and post
 ### Invariants
 
 - Exact duplicates require matching hashes under the chosen V1 algorithm family.
-- A post-copy hash must match before an operation is considered verified.
+- A post-copy hash must match, **and** the source change token must be equal immediately before and immediately after the copy, before an operation is considered verified. Preservation is evidenced separately by a comparison report.
 
 ### Commands
 
@@ -409,17 +409,28 @@ Encodes a single deterministic or AI-assisted classification rule.
 
 ### Required fields
 
+> These are **persistence field names for the stored entity**. They are a projection of the
+> canonical file contract, not a second wire format. The authoritative file format is
+> `config/schemas/classification-rule-set.schema.json`, explained in `rule-model.md`.
+> The mapping is one-to-one and is listed below.
+
 - `id`
-- `rule_set_id`
-- `priority`
-- `status`
+- `rule_set_id` — derived from containment; never appears in the YAML file
+- `band` — `safety`, `deterministic`, `content_inference`, `ai_assisted`, `fallback`
+- `priority` — constrained to its band's disjoint range
+- `status` — `proposed`, `provisional`, `active`, `disabled`, `retired`
 - `kind` with values `deterministic`, `content_inference`, `ai_assisted`, `manual_override`
-- `conditions`
-- `destination_template`
-- `minimum_confidence`
-- `conflict_policy`
-- `human_confirmation_required`
-- `test_case_refs`
+- `conditions` — file format: `when`
+- `destination_template` — file format: `then.destination` (relative to the set's symbolic destination root)
+- `destination_authority` — `executable_candidate` or `advisory_only`; file format: `then.destination_authority`
+- `outcome` — `propose_destination` or `route_to_review`; file format: `then.outcome`
+- `minimum_confidence` — file format: `confidence.minimum`
+- `conflict_policy` — file format: `conflict.mode`; values restricted to `manual_review` and `skip`
+- `collision_policy` — file format: `collision`; distinct from rule conflict
+- `human_confirmation_required` — file format: `confirmation.required`
+- `privacy_classification`
+- `policy_ref` — open decisions blocking promotion; required for provisional rules
+- `test_case_refs` — file format: `tests`
 - `rationale`
 
 ### Relationships
@@ -429,7 +440,9 @@ Encodes a single deterministic or AI-assisted classification rule.
 
 ### Lifecycle
 
-`proposed` → `reviewed` → `active` → `disabled` → `retired`
+`proposed` → `provisional` → `active` → `disabled` → `retired`
+
+A rule may also move `proposed` → `active` directly when it needs no operator policy decision, and any state may move to `retired`.
 
 ### Allowed states
 
@@ -441,9 +454,11 @@ Encodes a single deterministic or AI-assisted classification rule.
 
 ### Invariants
 
-- Provisional rules for dog, person/Voss identity, drone, CSV, and unresolved categories remain provisional until operator confirmation.
-- Higher-priority deterministic rules outrank lower-priority rules.
-- Human confirmation is mandatory for sensitive identity intent.
+- Provisional rules for dog, person identity, drone, CSV, and unresolved categories remain provisional until operator confirmation, and are **structurally advisory-only**: a provisional rule cannot express an automatically approved or executable outcome, and configuration validation rejects any attempt to make it do so.
+- Bands outrank priorities: a rule in a higher band always outranks a rule in a lower band, regardless of numeric priority. Priorities are compared only within a band.
+- Configuration load order never selects a winner.
+- Human confirmation is mandatory for sensitive identity intent, and a `sensitive_identity` rule may never carry status `active`.
+- Only a `safety`- or `deterministic`-band rule, in an approved rule set, with status `active`, may hold `destination_authority: executable_candidate`.
 
 ### Commands
 
@@ -519,6 +534,7 @@ Represents the output of evaluating rules against a file.
 
 - `ClassificationDecisionProposed`
 - `ClassificationDecisionReviewRequested`
+- `ClassificationConflictDetected`
 - `ClassificationDecisionApproved`
 - `ClassificationDecisionRejected`
 
@@ -831,12 +847,27 @@ Records explicit human approval for a plan, rule set, taxonomy node, review exce
 
 ### Required fields
 
+> The authoritative approval record is the `approval_granted` record in the Execution Journal.
+> The stored row below is a **derived index** over it. The full bound schema is defined in
+> `docs/02-specification/approval-binding-model.md`; an approval that is not bound to all of
+> these authorizes nothing.
+
 - `id`
 - `subject_type`
 - `subject_id`
-- `approver`
-- `approved_at`
+- `subject_version` — exact; never a range, never "latest"
+- `subject_content_hash`
+- `evidence_bundle_id`, `evidence_bundle_version`, `evidence_bundle_hash`
+- `rule_set_id`, `rule_set_version`, `rule_set_hash`
+- `taxonomy_version`, `taxonomy_hash`
+- `precondition_set_hash`
+- `adapter_descriptor_ids`, `preservation_profile_id`
+- `approver` — principal id and authority classes
+- `authentication_context` — auth event, session id, session binding hash, channel
 - `approval_scope`
+- `granted_at`, `not_before`, `expires_at`
+- `nonce`, `max_uses`
+- `binding_digest`
 - `approval_state`
 - `evidence_refs`
 
@@ -847,20 +878,31 @@ Records explicit human approval for a plan, rule set, taxonomy node, review exce
 
 ### Lifecycle
 
-`requested` → `granted` → `consumed` → `superseded`
+`requested` → `granted` → `claimed` → `consumed`
+
+Plus: `granted` → `revoked`, `granted` → `expired`, `granted` → `invalidated`, `granted` → `superseded`, and `claimed` → `released` → `granted` when a claim ended with zero effect.
 
 ### Allowed states
 
 - `requested`
 - `granted`
+- `claimed`
 - `consumed`
+- `released`
 - `revoked`
+- `expired`
+- `invalidated`
 - `superseded`
 
 ### Invariants
 
 - Approval must be explicit and tied to evidence.
 - Sentinel-originated requests are not approvals.
+- An approval binds to exact subject **content**, not merely to a subject id: subject version and content hash are both required.
+- Every approval carries an expiry and a single-use nonce.
+- Consumption is one-time and is claimed before the first mutation of the batch. A claim is bound to one run: the same run may resume, a different run is refused.
+- Authorization is re-evaluated by the trusted backend at execution time, on every attempt, including after every restart. A cached verdict is never reused across a restart or an upstream change.
+- The authoritative approval record is the journal record; the stored row is derived.
 
 ### Commands
 
@@ -878,7 +920,8 @@ Records explicit human approval for a plan, rule set, taxonomy node, review exce
 
 ### V1 limits
 
-- Approvals are not transferrable across unrelated subjects.
+- An approval authorizes exactly one `(subject_type, subject_id, subject_version, subject_content_hash)` tuple. **Approvals are never transferable**, including between versions of the same subject.
+- A plan, evidence, rule-set, taxonomy, adapter-capability, or relevant source-state change invalidates the approval.
 
 ## Batch
 
@@ -948,14 +991,25 @@ Append-only mutation log for plan execution, recovery, and reconciliation.
 
 ### Required fields
 
+> The Execution Journal is the **authoritative** durable record; SQLite is a derived projection
+> (ADR-016). The full protocol is in `docs/02-specification/durability-and-recovery-model.md`.
+
 - `id`
-- `journal_type`
+- `stream_id`
+- `journal_type` — the record type
 - `subject_type`
 - `subject_id`
+- `operation_id` — deterministic and stable across restarts and retries
+- `idempotency_key`
 - `payload`
-- `sequence_number`
+- `sequence_number` — monotonic within the stream, no gaps
+- `record_hash`
+- `prev_record_hash`
 - `written_at`
-- `write_state`
+
+> `write_state` is **not** a field of the record. A record in the journal is durable, or it does
+> not exist. A mutable status field inside an append-only log is a contradiction, so processing
+> status is a **derived projection value** held in SQLite, never inside the record.
 
 ### Relationships
 
@@ -965,7 +1019,12 @@ Append-only mutation log for plan execution, recovery, and reconciliation.
 
 `pending` → `written` → `sealed`
 
-### Allowed states
+> These are **projection** states derived from the journal, not fields stored inside a record.
+> `pending` means an append was attempted and has not been confirmed durable; `written` means the
+> durability barrier completed; `sealed` means the containing segment was closed; `failed` means the
+> append or flush returned an error.
+
+### Allowed states (projection)
 
 - `pending`
 - `written`
@@ -974,8 +1033,10 @@ Append-only mutation log for plan execution, recovery, and reconciliation.
 
 ### Invariants
 
-- Journal failure stops mutation.
-- The journal must be append-only.
+- Journal failure stops mutation. "Journal failure" means an append error, a flush or fsync error, or a control volume below the required durability class — each with its own reject code.
+- The journal is append-only and hash-chained. No record is ever edited in place.
+- A durable intent record precedes every filesystem mutation. No mutation may be attempted before that barrier completes.
+- A truncated final record is discarded and the discard is itself recorded. A corrupt mid-file record halts the system; it is never repaired or skipped.
 
 ### Commands
 
@@ -998,7 +1059,7 @@ Append-only mutation log for plan execution, recovery, and reconciliation.
 
 ### Purpose
 
-Captures post-operation checks proving copy/move correctness.
+Records post-operation content and preservation comparison results for a copy or move. Hash equality verifies content only and is never sufficient evidence of preservation or grounds for source retirement; see `docs/02-specification/preservation-model.md`.
 
 ### Required fields
 
@@ -1046,7 +1107,7 @@ Captures post-operation checks proving copy/move correctness.
 
 ### V1 limits
 
-- Verification may be hash-only in V1 unless policy demands additional checks.
+- Content verification is hash-based. **Preservation verification additionally requires a preservation comparison report.** Hash equality alone never satisfies the retirement gate.
 
 ## Checkpoint
 
@@ -1072,7 +1133,12 @@ Records restart-safe progress for scans, batches, and reconciliation runs.
 
 `open` → `persisted` → `sealed`
 
-### Allowed states
+> A checkpoint is **two immutable journal records** — the checkpoint itself and its seal — not a
+> mutable object. These four states are **derived projection values**: `open` means the scope still
+> has non-terminal operations, `persisted` means the checkpoint record is durable, `sealed` means the
+> seal record is durable, and `invalidated` means a later recovery action invalidated it.
+
+### Allowed states (projection)
 
 - `open`
 - `persisted`
@@ -1083,6 +1149,8 @@ Records restart-safe progress for scans, batches, and reconciliation runs.
 
 - Checkpoints must support idempotent resume.
 - A checkpoint never implies completion by itself.
+- **Only a sealed checkpoint may be used as a resume point.** An unsealed checkpoint is ignored.
+- Sealing requires that every record through the checkpoint sequence is durable, no operation is non-terminal at that sequence, the projection has been advanced to exactly that sequence, and the chain verifies from the previous sealed checkpoint.
 
 ### Commands
 

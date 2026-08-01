@@ -1,6 +1,6 @@
 # review-console
 
-Read-only review and approval surface for proposals, evidence, and audit links. Blueprint only; the frontend never authorizes filesystem mutation.
+Non-executing decision surface for proposals, evidence, and audit links. Read-only toward underlying file data; write-capable only for the bounded application-state commands listed in `docs/03-architecture/review-console-architecture.md`. Blueprint only; the frontend never authorizes filesystem mutation.
 
 ## Status
 Blueprint placeholder.

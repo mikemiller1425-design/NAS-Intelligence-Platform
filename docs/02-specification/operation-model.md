@@ -85,30 +85,47 @@ Before any filesystem action:
 - confirm the destination root is approved
 - confirm the source hash and size still match the plan
 - confirm free space and stop thresholds are acceptable
-- confirm the plan has a valid approval
+- confirm that the backend authorization evaluation passes for this exact entry, on this attempt, in this run (`docs/02-specification/approval-binding-model.md`)
 - confirm the journal is writable
 - confirm collisions are handled by policy
 
 ## Execution checks
 
+> The authoritative, numbered write protocol — with a failure branch for every step, a durable
+> intent record **before** any mutation, an atomic finalize step, and a deterministic crash-state
+> table — is defined in `docs/02-specification/durability-and-recovery-model.md`. The summary below
+> is a reader's overview and must not be implemented in place of that protocol.
+
 The executor must:
 
-1. Create destination directories safely.
-2. Write to a temporary destination name when needed.
-3. Copy or rename according to plan.
-4. Verify destination bytes against the expected hash.
-5. Record the outcome in the journal.
-6. Emit progress and failure events.
-7. Stop the batch if a safety threshold is exceeded.
+1. Append a durable **intent** record and complete its durability barrier. **No filesystem mutation may be attempted before this completes**, so every possible on-disk artifact is attributable.
+2. Create destination and staging directories safely.
+3. Write to a temporary destination name, always — not "when needed" — on the same filesystem as the destination.
+4. Flush and fsync the temporary file and its parent directory.
+5. Independently re-read and verify the destination bytes against the expected hash.
+6. Re-check that the destination path is still absent, then atomically finalize.
+7. Record the finalize and then the terminal outcome in the journal, each with a durability barrier.
+8. Emit progress and failure events.
+9. Stop the batch if a safety threshold is exceeded.
+
+The next filesystem mutation may not begin until the preceding operation's terminal outcome record is durable and no unresolved on-disk artifact remains.
 
 ## Verification rules
 
-Verification must prove:
+Verification must record:
 
 - the destination exists
-- the hash matches when required
+- the content hash matches
+- the source change token was equal immediately before and immediately after the copy
 - the observed counts reconcile with the plan
 - the source path remains accounted for in the chosen phase
+- a **preservation comparison report** covering every property the effective preservation profile marks `required`, `best_effort`, `normalized`, or `unsupported_reported`
+
+> **Hash equality verifies content, not preservation.** It says nothing about timestamps,
+> permissions, ownership, ACLs, extended attributes, resource forks, hard-link topology, symlink
+> semantics, sparse layout, or filename byte sequence. A hash match alone is never sufficient to
+> describe a copy as preserved, and never sufficient to authorize source retirement. See
+> `docs/02-specification/preservation-model.md`.
 
 If verification fails, the item remains unresolved or failed and the batch stops according to policy.
 
@@ -143,14 +160,18 @@ Batch progression must halt when the configured thresholds are exceeded.
 
 ## Collision handling
 
-Collision behavior must be explicit and per-entry. Allowed strategies are:
+Collision behavior must be explicit and per-entry. **Destination collision is distinct from rule conflict** and the two must never substitute for one another; see `rule-model.md`.
 
+Allowed strategies are:
+
+- `route_to_review`
 - `skip`
-- `version`
 - `compare`
-- `manual_review`
+- `versioned_suffix` — requires an exact version template and a maximum; the **new** copy receives the suffix, and the pre-existing file is never renamed, moved, or replaced
 
-Collisions may never default to silent overwrite.
+Collisions may never default to silent overwrite; `never_overwrite` is pinned true under every policy.
+
+A collision arising from case-only or Unicode-normalization difference is a mandatory review, never an automatic versioning — the two files are semantically distinct originals rather than versions of one another. Collision risk is evaluated against the **destination's** case and normalization sensitivity, not the source's.
 
 ## V1 limits
 

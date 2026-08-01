@@ -8,7 +8,13 @@ Validate classification, destination planning, collision detection, and evidence
 - No live NAS writes, renames, deletes, or moves.
 - No overwrite of protected vaults.
 - No deletion of source data.
-- Any source-retirement idea remains a proposal until hash verification and approval exist.
+- Any source-retirement idea remains a proposal until hash verification, a passing preservation comparison, and a bound approval all exist.
+
+## Authorization required
+
+This playbook describes **how** to run the dry-run stage. It does not authorize running it.
+
+Executing anything in this document requires a current, dated, operator-signed authorization record for gate **G4 `dry_run`**, per `docs/05-governance/gate-model.md`. Absence of an authorization record is a prohibition, not a gap. **G4 is the first gate at which the system touches the real NAS at all**, and it may only read.
 
 ## Preconditions
 - Source roots are confirmed.

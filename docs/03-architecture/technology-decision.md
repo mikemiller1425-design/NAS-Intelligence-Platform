@@ -4,7 +4,7 @@
 
 Choose the smallest toolchain that supports approval gates, adapter boundaries, immutable evidence, fixture testing, and a future local review console—without copying Foundry’s stack or introducing unnecessary distributed complexity.
 
-This document recommends direction for implementation **after** Foundation approval. It does not authorize dependency installation now.
+This document recommends direction for implementation, to be acted on only after a specific rung is authorized at gate G3 (`docs/05-governance/gate-model.md`). It authorizes nothing by itself — not dependency installation, not a Build Ladder, not implementation.
 
 ## Evaluated options
 
@@ -45,7 +45,7 @@ Synology NAS
 - No cloud-required control plane
 - No Foundry stack copy
 - No production classifiers or model downloads in the blueprint phase
-- No lockfiles until implementation tooling is authorized
+- No lockfiles until a rung is authorized at gate G3
 
 ## Consequences
 

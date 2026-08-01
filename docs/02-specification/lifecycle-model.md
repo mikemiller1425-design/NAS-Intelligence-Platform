@@ -178,7 +178,7 @@ The following state changes are only possible through explicit operator action o
 - `retirement_pending` → `retired`
 - `retired` → `archived`
 
-These transitions require validated evidence and must be recorded in the journal or equivalent audit trail.
+These transitions require validated evidence and must be recorded in the Execution Journal.
 
 ## Event coupling
 

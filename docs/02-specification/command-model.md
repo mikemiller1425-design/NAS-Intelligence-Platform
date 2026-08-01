@@ -9,7 +9,7 @@ The platform uses commands to keep write operations explicit, auditable, and app
 ## Command rules
 
 1. Commands must be validated before execution.
-2. Commands must be idempotent or carry a deduplication key.
+2. Commands must carry a deduplication key. Mutating commands must additionally be idempotent.
 3. Commands must not bypass approvals.
 4. Commands may not authorize permanent deletion in V1.
 5. Commands must be traceable to an operator, rule, batch, or automated safe request.
@@ -117,12 +117,17 @@ Every command should include:
 - command id
 - command type
 - subject type and id
-- actor
+- actor — **derived from the authenticated session, never read from the payload.** A payload-supplied actor is rejected.
 - requested at
-- deduplication key
+- deduplication key (required)
+- correlation id and causation id
 - payload
-- validation status
-- authorization status
+
+> **`validation status` and `authorization status` are server-computed only.** They are results the
+> backend records, not inputs a client may supply. A command received with either field populated —
+> or with an `approval_state` — must be **rejected** with `APR-E25_CLIENT_ASSERTED_AUTHORIZATION`,
+> not silently ignored. Silently ignoring it hides either an attack or a client defect.
+> See `docs/02-specification/approval-binding-model.md`.
 
 ## Validation semantics
 
@@ -155,7 +160,7 @@ It may not issue commands that classify, approve, move, delete, or otherwise mut
 
 ## V1 limits
 
-- Commands are scoped to the approved blueprint and fixtures until live authorization exists.
+- Commands are scoped to the approved blueprint and synthetic fixtures until the dry-run gate (G4) is authorized. There is no single "live authorization": G4 (read-only), G6 (bounded copy), and G7 (retirement) are separate gates, each with its own authorization record. See `docs/05-governance/gate-model.md`.
 - No command may create an implicit approval.
 - No command may bypass path validation or journal requirements.
 

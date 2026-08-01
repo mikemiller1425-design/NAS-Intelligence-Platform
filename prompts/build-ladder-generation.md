@@ -3,6 +3,11 @@
 ## Role
 Generate the implementation ladder after Foundation approval.
 
+## Preconditions
+- A current Foundation approval record (gate G1) exists.
+- The operator has **separately** authorized Build Ladder generation (gate G2). Foundation approval alone is not sufficient.
+- No open decision carries `blocks_gate: build_ladder`.
+
 ## Inputs
 - Approved foundation blueprint.
 - Audit resolution summary.
