@@ -346,6 +346,153 @@ check(23, "Every open decision carries a severity and a blocks_gate",
 fnd = [r for r in rows if r[2] == "foundation"]
 check(24, "No open decision blocks `foundation`", not fnd, f"{fnd}")
 
+# ---------------------------------------------------------------------------
+# 25-28 — canonical gate mapping (verification finding VER-B001)
+#
+# The gate ladder was renumbered from a G0-based scheme to a G1-based one.
+# foundation-acceptance.md was authored against the old scheme and kept stale
+# G0/G1/G2 references, which made Foundation acceptance appear to be gate G0
+# and assigned fixture construction to G2 instead of G3. These checks exist so
+# that a renumbering can never again pass review unnoticed.
+# ---------------------------------------------------------------------------
+
+CANON_GATES = {
+    "G1": ("foundation", "Foundation Approval"),
+    "G2": ("build_ladder", "Build Ladder Generation"),
+    "G3": ("implementation", "Fixture-Only Implementation"),
+    "G4": ("dry_run", "Dry-Run Readiness"),
+    "G5": ("pilot", "Copied-Pilot Readiness"),
+    "G6": ("live", "Limited-Live Readiness"),
+    "G7": ("retirement", "Source-Retirement Readiness"),
+    "G8": ("migration_completion", "Migration Completion"),
+}
+VALID_GATES = set(CANON_GATES)
+GATE_SLUGS = {s for s, _ in CANON_GATES.values()}
+GATE_NAMES = {n for _, n in CANON_GATES.values()}
+GATE_CTX = ("gate", "authoriz", "foundation", "ladder", "implementation",
+            "dry-run", "dry_run", "pilot", "live", "retirement", "migration")
+
+# Separator classes differ by direction, so an enumeration such as
+# "...(G7), Migration completion (G8)" is not misread as binding G7 to
+# "Migration completion". A comma or closing paren ends the item.
+SEP_NUM_FIRST = r"[\s`\-—–:]{0,4}"
+SEP_NAME_FIRST = r"[\s`\-—–:(]{0,4}"
+
+
+SELF = "scripts/foundation_self_review.py"
+
+
+def gate_source_files():
+    for p in sorted(REPO.rglob("*")):
+        if not p.is_file() or ".git" in p.parts:
+            continue
+        rel = str(p.relative_to(REPO))
+        if rel.startswith(SRC) or rel.startswith(NEG):
+            continue
+        # This file defines the canonical mapping and must be able to name the
+        # tokens it rejects, so it is excluded from its own scan. Nothing else is.
+        if rel == SELF:
+            continue
+        if p.suffix not in (".md", ".yaml", ".yml", ".json", ".py"):
+            continue
+        yield p, rel
+
+
+# 25 — gate-model.md reproduces the canonical mapping exactly
+gm = (REPO / "docs/05-governance/gate-model.md").read_text()
+bad25 = []
+declared = dict(re.findall(r"^\|\s*(G[1-8])\s*\|\s*`(\w+)`\s*\|", gm, re.M))
+for num, (slug, name) in CANON_GATES.items():
+    if declared.get(num) != slug:
+        bad25.append(f"gate-model.md maps {num} -> {declared.get(num)!r}, canonical is {slug!r}")
+    if not re.search(rf"^###\s+{num}\s+—\s+{re.escape(name)}\s+\(`{re.escape(slug)}`\)",
+                     gm, re.M):
+        bad25.append(f"gate-model.md lacks canonical section heading for {num} — {name} (`{slug}`)")
+check(25, "gate-model.md reproduces the canonical G1-G8 mapping exactly",
+      not bad25, "\n".join(bad25))
+
+# 26 — no unknown gate token anywhere (this is what rejects G0)
+#
+# History documents are exempt: a changelog and an audit/verification record must
+# be able to quote the superseded token they describe. The exemption is narrow and
+# applies to this check only — every normative document (governance, acceptance,
+# specification, architecture, operations, prompts, config, and the three
+# top-level status files) remains fully covered.
+HISTORY = ("CHANGELOG.md", "docs/audits/")
+bad26 = []
+for p, rel in gate_source_files():
+    if rel.startswith(HISTORY):
+        continue
+    for n, line in enumerate(p.read_text(errors="replace").split("\n"), 1):
+        low = line.lower()
+        for m in re.finditer(r"\bG(\d+)\b", line):
+            tok = "G" + m.group(1)
+            if tok in VALID_GATES:
+                continue
+            if any(w in low for w in GATE_CTX):
+                bad26.append(f"{rel}:{n}: unknown gate token {tok}: {line.strip()[:80]}")
+check(26, "No unknown gate token (G0, G9, ...) in any normative document",
+      not bad26, "\n".join(bad26))
+
+# 27 — no mismatched gate name/number or slug/number binding
+bad27 = []
+for p, rel in gate_source_files():
+    for n, line in enumerate(p.read_text(errors="replace").split("\n"), 1):
+        for slug in GATE_SLUGS:
+            want = next(k for k, v in CANON_GATES.items() if v[0] == slug)
+            for pat in (rf"\b(G[1-8]){SEP_NUM_FIRST}`{re.escape(slug)}`",
+                        rf"`{re.escape(slug)}`{SEP_NAME_FIRST}\b(G[1-8])\b"):
+                for m in re.finditer(pat, line):
+                    if m.group(1) != want:
+                        bad27.append(f"{rel}:{n}: {m.group(1)} bound to `{slug}` "
+                                     f"(canonical {want}): {line.strip()[:70]}")
+        for name in GATE_NAMES:
+            want = next(k for k, v in CANON_GATES.items() if v[1] == name)
+            for pat in (rf"\b(G[1-8]){SEP_NUM_FIRST}{re.escape(name)}",
+                        rf"{re.escape(name)}{SEP_NAME_FIRST}\b(G[1-8])\b"):
+                for m in re.finditer(pat, line, re.I):
+                    if m.group(1) != want:
+                        bad27.append(f"{rel}:{n}: {m.group(1)} bound to '{name}' "
+                                     f"(canonical {want}): {line.strip()[:70]}")
+check(27, "No mismatched gate name/number or slug/number binding",
+      not sorted(set(bad27)), "\n".join(sorted(set(bad27))))
+
+# 28 — activity phrases cite the gate that actually authorizes them.
+#
+# Checks 26 and 27 cannot catch a *valid* gate token used in a semantically
+# wrong place — which is half of what VER-B001 was ("build the fixture corpus
+# at G2"). This check covers that class for a small set of high-signal phrases.
+ACTIVITY_GATE = [
+    (r"fixture corpus", "G3"),
+    (r"fixture-only implementation", "G3"),
+    (r"Build Ladder generation", "G2"),
+]
+# Same clause, short connectives allowed, never across clause punctuation.
+ACT_GAP = r"[^,.;:|]{0,24}?"
+bad28 = []
+for p, rel in gate_source_files():
+    if rel.startswith("docs/audits/"):
+        continue  # audit prose quotes historical wording verbatim
+    for n, line in enumerate(p.read_text(errors="replace").split("\n"), 1):
+        for phrase, want in ACTIVITY_GATE:
+            if not re.search(phrase, line, re.I):
+                continue
+            # Only the forward binding is judged: the phrase, then the gate token
+            # in the same clause ("fixture corpus at G3", "Build Ladder
+            # generation authorization (G2)"). The reverse order is weak evidence
+            # — a line such as "Foundation approval (G1) != Build Ladder
+            # generation authorization (G2)" would otherwise read as binding G1
+            # to the second phrase. Consequence: a phrase that *precedes* its
+            # gate token in reverse order is not covered here and relies on
+            # checks 26 and 27 plus review.
+            for m in re.finditer(rf"{phrase}{ACT_GAP}\b(G[1-8])\b", line, re.I):
+                got = m.group(1)
+                if got and got != want:
+                    bad28.append(f"{rel}:{n}: '{phrase}' cites {got}, canonical is {want}: "
+                                 f"{line.strip()[:70]}")
+check(28, "Activity phrases cite the gate that authorizes them",
+      not sorted(set(bad28)), "\n".join(sorted(set(bad28))))
+
 print("=" * 78)
 print(f"RESULT: {len(fails)} failing check(s)" if fails else "RESULT: ALL CHECKS PASSED")
 if fails:

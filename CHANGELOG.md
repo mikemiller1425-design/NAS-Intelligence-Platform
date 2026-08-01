@@ -2,6 +2,36 @@
 
 All notable foundation and architectural decisions for the NAS Intelligence Platform are recorded here.
 
+## [1.0-rc2a] — 2026-08-01
+
+### Verification correction
+
+**VER-B001 — stale gate numbering in Foundation acceptance.** Independent verification of `34620db`
+found that `docs/04-acceptance/foundation-acceptance.md` still referenced the superseded G0-based
+gate scheme: it described Foundation acceptance as gate **G0**, which does not exist in the
+canonical ladder, and assigned execution validation and fixture construction to **G2** (Build Ladder
+Generation) rather than **G3** (Fixture-Only Implementation).
+
+Cause: the ladder was renumbered from G0-based to G1-based during audit resolution.
+`gate-model.md` was renumbered; `foundation-acceptance.md` had already been written against the old
+scheme and was not re-checked. The file ended up internally mixed — earlier sections on the old
+numbering, later-appended sections on the new — which is why the original self-review missed it.
+
+- Six gate references corrected; "Passing G0 does not authorize G1" is now "Passing G1 does not
+  authorize G2". The document was re-read in full against `gate-model.md`.
+- All active documentation swept for unknown gate tokens and mismatched gate name/number pairs.
+- `scripts/foundation_self_review.py` extended with four gate-mapping checks (25-28): canonical
+  mapping reproduced exactly, no unknown gate token (this is what rejects G0), no mismatched
+  name/slug binding, and activity phrases citing the gate that authorizes them.
+- Checks 25-28 regression-tested in both directions: green on the corrected repository, and
+  failing on the pre-fix file restored from `34620db` (26 on the G0 references, 28 on "fixture
+  corpus at G2"). A check that cannot fail proves nothing.
+- Verification finding and its known limits recorded in
+  `docs/audits/foundation-resolution-verification.md`.
+
+No specification content changed. Foundation 1.0 remains unapproved, the Build Ladder remains
+ungenerated, and no NAS was accessed.
+
 ## [1.0-rc2] — 2026-07-31
 
 ### Audit resolution

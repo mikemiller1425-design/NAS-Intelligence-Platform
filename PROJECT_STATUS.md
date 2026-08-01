@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | Current phase | Blueprint / Foundation Candidate |
-| Foundation status | `1.0-rc2` — **release candidate.** Audit findings resolved; awaiting independent verification of those resolutions |
+| Foundation status | `1.0-rc2a` — **release candidate.** Audit findings resolved; verification finding VER-B001 corrected; awaiting independent re-verification |
 | Foundation 1.0 | **Not approved** |
 | Implementation | **Blocked** |
 | Build Ladder generation | **Not authorized** |
 | Live NAS execution | **Prohibited** |
 | Dry-run engine execution | **Prohibited** — requires gate G4, which is four gates away |
-| Last completed milestone | Resolution of the independent Foundation audit (FND-B001–B003, FND-M001–M005, FND-m001–m004) |
-| Next required action | **Independent verification of the audit resolutions** |
+| Last completed milestone | Correction of verification finding VER-B001 (stale gate numbering in Foundation acceptance) |
+| Next required action | **Independent re-verification at the current commit** |
 
 ## Where things stand
 
@@ -24,7 +24,7 @@ Authorization is defined once, in `docs/05-governance/gate-model.md`. Eight gate
 
 | Gate | Status |
 | --- | --- |
-| G1 `foundation` | Candidate ready for independent verification |
+| G1 `foundation` | Candidate ready for independent re-verification |
 | G2 `build_ladder` | Not authorized |
 | G3 `implementation` | Not authorized |
 | G4 `dry_run` | Not authorized — **first gate that touches the real NAS, and only to read** |
@@ -67,6 +67,7 @@ See `docs/05-governance/open-decisions.md` for the full register. Every decision
 | Source material | `docs/source/` |
 | Traceability | `docs/migration/` |
 | Audit and resolutions | `docs/audits/foundation-v1-audit.md` |
+| Verification findings | `docs/audits/foundation-resolution-verification.md` |
 | Handoffs | `docs/handoffs/` |
 | Future concepts | `docs/future-registry/` |
 | Example config | `config/` |
@@ -75,7 +76,7 @@ See `docs/05-governance/open-decisions.md` for the full register. Every decision
 
 **Not authorized.** Claude Code must not receive Build Ladder or implementation authorization until:
 
-1. Independent verification of the audit resolutions is complete.
+1. Independent re-verification at the current commit is complete.
 2. Foundation 1.0 is explicitly approved (gate G1).
 3. Build Ladder generation is **separately** authorized (gate G2).
 4. Each implementation rung is **separately** authorized (gate G3).
@@ -84,6 +85,6 @@ Steps 2, 3, and 4 are distinct. None of them implies the next.
 
 ## Exact next action
 
-**Independent verification of the audit resolutions at the current commit.**
+**Independent re-verification at the current commit.**
 
 The verifier should check that every finding has a resolution, that no finding was silently waived, that the canonical rule schema validates its positive example and rejects every negative example for the intended reason, that no document authorizes live NAS access or Build Ladder generation, and that Foundation 1.0 remains unapproved.

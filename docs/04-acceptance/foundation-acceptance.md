@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This document holds the acceptance requirements for **gate G0 — Foundation Approval** (`docs/05-governance/gate-model.md`).
+This document holds the acceptance requirements for **gate G1 — Foundation Approval** (`docs/05-governance/gate-model.md`).
 
 Every requirement here is verifiable **by reading and validating artifacts in this repository**. None requires implemented software, a running backend, a browser, restart testing, execution fixtures, or pilot evidence. That separation is the resolution of audit finding **FND-B001**.
 
-Execution-verifiable requirements live in `docs/04-acceptance/v1-acceptance.md` and are consumed by gate G2 and later. They are **not** prerequisites for Foundation approval.
+Execution-verifiable requirements live in `docs/04-acceptance/v1-acceptance.md` and are consumed by gate G3 (fixture-only implementation) and later. They are **not** prerequisites for Foundation approval.
 
 ## How to read the columns
 
@@ -75,7 +75,7 @@ Execution-verifiable requirements live in `docs/04-acceptance/v1-acceptance.md` 
 | FND-ACC-044 | A deterministic crash-state table covers interruption before and after every durable transition. | Read the crash-state table; confirm every protocol step has both a before and an after row. | Step-to-row mapping | BLOCKER | `foundation` |
 | FND-ACC-045 | Approval binding is specified with all bound fields, a backend evaluation algorithm, invalidation triggers, one-time consumption, and anti-replay behavior. | Read `docs/02-specification/approval-binding-model.md`. | Specification review | BLOCKER | `foundation` |
 | FND-ACC-046 | The frontend/backend trust boundary states that the frontend captures intent only and never evaluates authorization. | Read the approval and review-console documents and `ADR-014`. | Cross-read notes | BLOCKER | `foundation` |
-| FND-ACC-047 | Fixture requirements are enumerated specifically enough to build the fixture corpus at G2 without further design decisions. | Read `tests/fixtures/README.md`. | Fixture list review | MAJOR | `foundation` |
+| FND-ACC-047 | Fixture requirements are enumerated specifically enough to build the fixture corpus at G3 without further design decisions. | Read `tests/fixtures/README.md`. | Fixture list review | MAJOR | `foundation` |
 | FND-ACC-048 | Adapter-dependent behavior is specified as a capability contract, so implementation can proceed against fixtures while OD-016 remains open. | Read `docs/03-architecture/adapter-architecture.md` and the preservation profiles. | Specification review | BLOCKER | `foundation` |
 
 ## Traceability
@@ -113,13 +113,13 @@ Seven requirements had both a documentary half and an execution half. The docume
 
 ## Pass rule
 
-Foundation approval (G0) may be recommended only when:
+Foundation approval (G1) may be recommended only when:
 
 1. every **BLOCKER** requirement in **this file** passes;
 2. every **MAJOR** requirement in this file passes or carries an explicit, recorded operator waiver;
 3. every audit finding has a recorded resolution status;
 4. no open decision classified `blocks_gate: foundation` remains unresolved.
 
-**Requirements in `docs/04-acceptance/v1-acceptance.md` are explicitly not part of this pass rule.** They are evaluated at gate G2 and later, after implementation exists to evaluate.
+**Requirements in `docs/04-acceptance/v1-acceptance.md` are explicitly not part of this pass rule.** They are evaluated at gate G3 and later, after implementation exists to evaluate.
 
-Passing G0 does not authorize G1. Build Ladder generation requires its own explicit operator authorization.
+Passing G1 does not authorize G2. Build Ladder generation requires its own explicit operator authorization.

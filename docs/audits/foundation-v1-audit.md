@@ -71,6 +71,15 @@ No requirement was deleted. Four documentary rows moved to `foundation-acceptanc
 - Repository search for gate-promotion language returns only the explicit non-authorization statements.
 - Every operations playbook now opens with an authorization-required section naming its gate.
 
+> **Post-verification correction.** Independent verification of commit `34620db` returned
+> **VER-B001** against this finding's own artifact: `foundation-acceptance.md` still carried the
+> superseded G0-based gate numbering, because the ladder was renumbered after that file was written
+> and the file was not re-checked. Six references were corrected, and four gate-mapping checks
+> (25–28) were added to `scripts/foundation_self_review.py` so a renumbering cannot pass unnoticed
+> again. See `docs/audits/foundation-resolution-verification.md`. The separation of documentary from
+> executable acceptance — the substance of FND-B001 — was correct and unchanged; only the gate
+> labels were wrong.
+
 **Remaining risk**
 
 The gate model is only as strong as the discipline of recording authorizations. It defines the record but cannot enforce that one is created; that enforcement arrives with implementation at G3. The mapping between the eight authorization gates and the eight V1 *operating* gates in `v1-scope.md` is documented but remains two vocabularies a reader must hold at once.

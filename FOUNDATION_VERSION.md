@@ -1,8 +1,8 @@
 # Foundation Version
 
 ```text
-NAS Intelligence Platform Foundation: 1.0-rc2
-Status: Release candidate — audit findings resolved, awaiting independent verification
+NAS Intelligence Platform Foundation: 1.0-rc2a
+Status: Release candidate — audit findings resolved, VER-B001 corrected, awaiting independent re-verification
 Foundation 1.0 approval: NOT GRANTED
 Implementation status: Blocked
 Build Ladder generation: Not authorized
@@ -38,11 +38,12 @@ Each step requires its own explicit operator authorization. **No step authorizes
 
 1. Independent foundation audit → `docs/audits/foundation-v1-audit.md` ✔ complete
 2. Resolve every finding, waiving none ✔ complete
-3. **Independent verification of the resolutions** ← current step
-4. Explicit Foundation 1.0 approval (gate G1)
-5. Build Ladder generation authorization (gate G2)
-6. Per-rung fixture-only implementation authorization (gate G3)
-7. Separate gates for dry-run (G4), copied pilot (G5), limited live (G6), source retirement (G7), and migration completion (G8)
+3. Independent verification of the resolutions ✔ complete — one finding returned (VER-B001), corrected
+4. **Independent re-verification at the corrected commit** ← current step
+5. Explicit Foundation 1.0 approval (gate G1)
+6. Build Ladder generation authorization (gate G2)
+7. Per-rung fixture-only implementation authorization (gate G3)
+8. Separate gates for dry-run (G4), copied pilot (G5), limited live (G6), source retirement (G7), and migration completion (G8)
 
 Gates are defined once, in `docs/05-governance/gate-model.md`.
 
@@ -57,4 +58,5 @@ Gates are defined once, in `docs/05-governance/gate-model.md`.
 - `docs/04-acceptance/foundation-acceptance.md`
 - `docs/04-acceptance/v1-acceptance.md`
 - `docs/audits/foundation-v1-audit.md`
+- `docs/audits/foundation-resolution-verification.md`
 - `docs/handoffs/002-audit-resolution.md`
