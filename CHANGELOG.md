@@ -2,6 +2,79 @@
 
 All notable foundation and architectural decisions for the NAS Intelligence Platform are recorded here.
 
+## [1.1] — 2026-08-01
+
+### Foundation 1.0 approved; Build Ladder generated
+
+**Gate G1 — Foundation Approval: GRANTED** by the operator at commit `54ec3a8`.
+**Gate G2 — Build Ladder Generation: GRANTED** separately, on the same date.
+
+Both are recorded in the new `docs/05-governance/authorization-ledger.md`, which is now the
+authoritative record of gate authorizations. Foundation approval is **not** implementation
+authorization; G3 through G8 remain unauthorized.
+
+### Added
+
+- `docs/handoffs/build-ladder.md` — the Build Ladder: **79 rungs**, frozen and planning-only.
+  70 of 79 complete before the system reads a single byte from the NAS.
+- `docs/05-governance/authorization-ledger.md` — append-only gate authorization record.
+- `scripts/validate_build_ladder.py` — 17 structural checks over the ladder.
+- `prompts/rung-correction.md`, `prompts/architecture-drift-review.md`,
+  `prompts/release-readiness-review.md`.
+- `OD-023` (G4 plan promotability) and `OD-024` (symlink and hard-link reproduction scope),
+  both arising from planning findings.
+
+### Ordering defects corrected in the required-rung list
+
+Generating the ladder against the specifications surfaced seven sequencing errors in the
+required-rung list of handoff 003. Each correction is forced by a specific invariant:
+
+- **Fault-injection harness moved from 34th to 7th.** A journal rung inspected without fault
+  injection is inspected against the happy path only.
+- **Taxonomy moved before the rule engine.** `VAL-TAXONOMY` is a rule-loader check, so a loader
+  built first cannot satisfy its own specified check set.
+- **Duplicate status split out and moved early.** `exact_duplicate_status` is pinned as stage 2
+  of 8 in the evaluation order and is a rule predicate field.
+- **Planner moved before approval binding.** An approval binds the content hash of a plan that
+  must already be sealed.
+- **Live adapter split.** Writing it is G3; measuring it against the NAS is the first real read
+  and belongs at G4.
+- **Preservation split** into plan-time profile resolution and post-copy comparison reporting.
+- **Review console and Sentinel moved late.** Both have acceptance criteria that are negative
+  claims, provable only once backend authorization exists.
+
+### Planning findings
+
+Thirty specification gaps and contradictions were found — 18 BLOCKER, 8 MAJOR, 3 MINOR, 1 NOTE.
+They are recorded in the ladder's **Planning findings** section, each routed to change control or
+to an operator decision, and each named in the **Blocked by** field of the rung it blocks. None is
+resolved here; G2 does not authorize resolving them. Notable examples:
+
+- The journal record vocabulary cannot reconstruct the projection, making the rebuild acceptance
+  requirement unsatisfiable as written.
+- The authoritative write protocol never captures the change tokens that the identity model
+  requires before an atomic promote.
+- `EvidenceBundle` is bound by the approval record and defined nowhere.
+- A measured **destination** capability descriptor cannot be produced at G4, because measuring one
+  requires a write and G4 authorizes none — so a G4 plan is structurally incapable of carrying one.
+
+### Rungs added beyond the required list
+
+Six rungs exist because the required list had no owner for work the specifications demand:
+symbolic root registry, threshold governor, observability and redaction, incident and reason-code
+surface, hostile-path fixtures, and the G4 readiness assembler. Three safety acceptance rows —
+secret scanning, live-path guarding, and hostile-path testing — previously had no implementing rung.
+
+### Changed
+
+- `scripts/foundation_self_review.py` checks 19 and 20 now assert the *current* gate state: the
+  ladder is generated and frozen, and G3–G8 remain unauthorized. They previously asserted the
+  pre-approval state and would otherwise have been factually wrong.
+
+### Unchanged
+
+- No implementation code. No NAS access. No rung authorized. Live NAS execution prohibited.
+
 ## [1.0-rc2a] — 2026-08-01
 
 ### Verification correction

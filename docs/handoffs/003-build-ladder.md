@@ -82,6 +82,12 @@ Each rung must define:
 - Sentinel never authorizes destructive work
 - Fixtures and synthetic paths first
 
+## Status
+
+**Satisfied.** The Build Ladder was generated under G2 on 2026-08-01 and is frozen at `docs/handoffs/build-ladder.md` — 79 rungs. Its structural integrity is verified by `scripts/validate_build_ladder.py`.
+
+Generation surfaced thirty specification gaps and seven ordering defects in the required-rung list below; both are recorded in the ladder's **Planning findings** and **Deviations** sections. The required-rung list is retained here as the original instruction, not as the final sequence.
+
 ## Stop condition
 
 Build Ladder document produced and frozen as planning-only. Implementation of rung N requires explicit authorization of rung N at gate G3, and authorization of rung N never authorizes rung N+1.

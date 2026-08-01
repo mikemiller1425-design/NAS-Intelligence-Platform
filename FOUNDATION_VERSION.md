@@ -1,11 +1,11 @@
 # Foundation Version
 
 ```text
-NAS Intelligence Platform Foundation: 1.0-rc2a
-Status: Release candidate — audit findings resolved, VER-B001 corrected, awaiting independent re-verification
-Foundation 1.0 approval: NOT GRANTED
-Implementation status: Blocked
-Build Ladder generation: Not authorized
+NAS Intelligence Platform Foundation: 1.1
+Status: APPROVED at gate G1 on 2026-08-01, at commit 54ec3a8
+Foundation 1.0 approval: GRANTED (gate G1)
+Build Ladder generation: AUTHORIZED (gate G2, granted separately)
+Implementation status: Blocked — gate G3 not authorized for any rung
 Live NAS execution: Prohibited
 Dry-run engine execution: Prohibited (requires gate G4)
 Active mission: Produce a fully organized NAS through a tested, explainable, reversible migration system
@@ -23,10 +23,9 @@ Active mission: Produce a fully organized NAS through a tested, explainable, rev
 
 `1.0-rc2` is a foundation **release candidate**. It packages product intent, safety principles, specifications, architecture, operational playbooks, acceptance criteria, governance, configuration examples, schemas, and audit resolutions.
 
-It is **not** authorization to:
+Foundation 1.0 approval and Build Ladder authorization are **not** authorization to:
 
-- approve Foundation 1.0;
-- generate a Build Ladder;
+- implement any rung;
 - implement production engine code;
 - install classifier models against live data;
 - run dry-run or live engines against mounted shares;
@@ -39,11 +38,13 @@ Each step requires its own explicit operator authorization. **No step authorizes
 1. Independent foundation audit → `docs/audits/foundation-v1-audit.md` ✔ complete
 2. Resolve every finding, waiving none ✔ complete
 3. Independent verification of the resolutions ✔ complete — one finding returned (VER-B001), corrected
-4. **Independent re-verification at the corrected commit** ← current step
-5. Explicit Foundation 1.0 approval (gate G1)
-6. Build Ladder generation authorization (gate G2)
-7. Per-rung fixture-only implementation authorization (gate G3)
-8. Separate gates for dry-run (G4), copied pilot (G5), limited live (G6), source retirement (G7), and migration completion (G8)
+4. Explicit Foundation 1.0 approval (gate G1) ✔ **granted 2026-08-01 at commit `54ec3a8`**
+5. Build Ladder generation authorization (gate G2) ✔ **granted separately, same date**
+6. **Independent review of the generated Build Ladder** ← current step
+7. Per-rung fixture-only implementation authorization (gate G3) — not authorized
+8. Separate gates for dry-run (G4), copied pilot (G5), limited live (G6), source retirement (G7), and migration completion (G8) — none authorized
+
+Authorizations are recorded in `docs/05-governance/authorization-ledger.md`. **Foundation 1.0 approval is not implementation authorization.**
 
 Gates are defined once, in `docs/05-governance/gate-model.md`.
 

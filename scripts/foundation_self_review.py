@@ -275,33 +275,50 @@ for f in ["README.md", "PROJECT_STATUS.md", "FOUNDATION_VERSION.md"]:
         bad18.append(f"{f} lacks a live-execution prohibition")
 check(18, "No document authorizes live NAS access", not bad18, "\n".join(bad18))
 
-# 19 — Build Ladder remains ungenerated and unauthorized
+# 19 — Build Ladder is generated under G2 and frozen as planning-only
+#
+# This check previously asserted the ladder was ungenerated. G2 was authorized on
+# 2026-08-01, so the invariant changed: the ladder now exists and must be frozen,
+# planning-only, and structurally valid. The safety property that still matters —
+# that no rung is authorized for implementation — is check 20.
 bad19 = []
-ladder_files = [p for p in REPO.rglob("*build-ladder*") if p.is_file()]
-for p in ladder_files:
-    rel = str(p.relative_to(REPO))
-    if rel not in ("docs/handoffs/003-build-ladder.md", "prompts/build-ladder-generation.md"):
-        bad19.append(f"unexpected build-ladder artifact: {rel}")
-ps = (REPO / "PROJECT_STATUS.md").read_text()
-if "Build Ladder generation | **Not authorized**" not in ps:
-    bad19.append("PROJECT_STATUS.md does not mark Build Ladder unauthorized")
+ladder = REPO / "docs/handoffs/build-ladder.md"
+if not ladder.exists():
+    bad19.append("docs/handoffs/build-ladder.md missing while G2 is granted")
+else:
+    lt = ladder.read_text()
+    for phrase in ("it authorizes nothing", "never authorizes rung"):
+        if phrase.lower() not in lt.lower():
+            bad19.append(f"ladder lacks the non-authorization statement: {phrase!r}")
 h3 = (REPO / "docs/handoffs/003-build-ladder.md").read_text()
 if "frozen as planning-only" not in h3:
     bad19.append("handoff 003 lost its planning-only stop condition")
-check(19, "Build Ladder remains ungenerated and unauthorized", not bad19, "\n".join(bad19))
+check(19, "Build Ladder generated under G2 and frozen as planning-only",
+      not bad19, "\n".join(bad19))
 
-# 20 — Foundation 1.0 not marked approved
+# 20 — G3 through G8 remain unauthorized
+#
+# This check previously asserted Foundation 1.0 was unapproved. G1 and G2 were
+# granted on 2026-08-01, so the live safety invariant is now the one below: no
+# implementation gate and no gate that touches the NAS may be authorized.
 bad20 = []
-for rel, n, line in grep(r"foundation 1\.0"):
-    plain = line.replace("**", "").replace("*", "").replace("`", "")
-    if not re.search(r"\bapproved\b", plain, re.I):
-        continue
-    if re.search(r"(not approved|not granted|not been approved|does not approve|"
-                 r"explicitly approved|until|before|requires|awaiting|unapproved|remains)",
-                 plain, re.I):
-        continue
-    bad20.append(f"{rel}:{n}: {line[:90]}")
-check(20, "Foundation 1.0 is NOT marked approved", not bad20, "\n".join(bad20))
+ledger = REPO / "docs/05-governance/authorization-ledger.md"
+if not ledger.exists():
+    bad20.append("authorization ledger missing")
+else:
+    lt = ledger.read_text()
+    for gate in ("G3", "G4", "G5", "G6", "G7", "G8"):
+        seg = lt.split(f"### {gate} —")
+        if len(seg) < 2:
+            bad20.append(f"ledger has no entry for {gate}")
+            continue
+        body = seg[1].split("### ")[0]
+        if "NOT AUTHORIZED" not in body:
+            bad20.append(f"ledger does not mark {gate} NOT AUTHORIZED")
+ps = (REPO / "PROJECT_STATUS.md").read_text()
+if "G3" not in ps or "Not authorized" not in ps:
+    bad20.append("PROJECT_STATUS.md does not state G3 is unauthorized")
+check(20, "G3 through G8 remain unauthorized", not bad20, "\n".join(bad20))
 
 # 21 — YAML/JSON parse of every config artifact
 bad21 = []
@@ -339,8 +356,10 @@ check(22, "Event vocabulary matches exactly between domain and event models",
 # 23 — every open decision carries severity and blocks_gate
 od = (REPO / "docs/05-governance/open-decisions.md").read_text()
 rows = re.findall(r"^\| (OD-\d{3}) \|[^|]*\| (BLOCKER|MAJOR|MINOR) \| `(\w+)` \|", od, re.M)
+all_ods = re.findall(r"^\| (OD-\d{3}) \|", od, re.M)
 check(23, "Every open decision carries a severity and a blocks_gate",
-      len(rows) == 22, f"rows with both attributes: {len(rows)}/22")
+      len(rows) == len(all_ods) and all_ods,
+      f"rows with both attributes: {len(rows)}/{len(all_ods)}")
 
 # 24 — no open decision blocks foundation
 fnd = [r for r in rows if r[2] == "foundation"]

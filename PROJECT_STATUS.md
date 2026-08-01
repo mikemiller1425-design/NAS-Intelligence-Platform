@@ -3,14 +3,15 @@
 | Field | Value |
 | --- | --- |
 | Current phase | Blueprint / Foundation Candidate |
-| Foundation status | `1.0-rc2a` — **release candidate.** Audit findings resolved; verification finding VER-B001 corrected; awaiting independent re-verification |
-| Foundation 1.0 | **Not approved** |
-| Implementation | **Blocked** |
-| Build Ladder generation | **Not authorized** |
+| Foundation status | **1.0 — APPROVED** at gate G1 on 2026-08-01, at commit `54ec3a8` |
+| Foundation 1.0 | **Approved (G1)** |
+| Build Ladder generation | **Authorized (G2)** — granted separately from G1 |
+| Build Ladder | Generated — 79 rungs at `docs/handoffs/build-ladder.md`; awaiting independent review |
+| Implementation | **Blocked** — G3 not authorized for any rung |
 | Live NAS execution | **Prohibited** |
 | Dry-run engine execution | **Prohibited** — requires gate G4, which is four gates away |
-| Last completed milestone | Correction of verification finding VER-B001 (stale gate numbering in Foundation acceptance) |
-| Next required action | **Independent re-verification at the current commit** |
+| Last completed milestone | Foundation 1.0 approved (G1); Build Ladder generated under G2 |
+| Next required action | **Independent review of the Build Ladder** |
 
 ## Where things stand
 
@@ -24,9 +25,9 @@ Authorization is defined once, in `docs/05-governance/gate-model.md`. Eight gate
 
 | Gate | Status |
 | --- | --- |
-| G1 `foundation` | Candidate ready for independent re-verification |
-| G2 `build_ladder` | Not authorized |
-| G3 `implementation` | Not authorized |
+| G1 `foundation` | **GRANTED** 2026-08-01 at `54ec3a8` |
+| G2 `build_ladder` | **GRANTED** 2026-08-01, separately from G1 |
+| G3 `implementation` | Not authorized — granted per rung, never wholesale |
 | G4 `dry_run` | Not authorized — **first gate that touches the real NAS, and only to read** |
 | G5 `pilot` | Not authorized |
 | G6 `live` | Not authorized |
@@ -68,6 +69,8 @@ See `docs/05-governance/open-decisions.md` for the full register. Every decision
 | Traceability | `docs/migration/` |
 | Audit and resolutions | `docs/audits/foundation-v1-audit.md` |
 | Verification findings | `docs/audits/foundation-resolution-verification.md` |
+| Gate authorizations | `docs/05-governance/authorization-ledger.md` |
+| Build Ladder | `docs/handoffs/build-ladder.md` |
 | Handoffs | `docs/handoffs/` |
 | Future concepts | `docs/future-registry/` |
 | Example config | `config/` |

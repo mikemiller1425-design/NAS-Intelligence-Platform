@@ -39,6 +39,8 @@ A decision blocks its named gate and every later gate until it is resolved. **Re
 | OD-020 | Project path `90_Project/nas-intelligence-platform` | MINOR | `live` | — | Intended location concept. Creating this path on the NAS is itself a live write, so it cannot precede the live gate. |
 | OD-021 | Migration completeness criteria and residual-exception tolerance | MAJOR | `migration_completion` | — | Added during audit resolution. `V1-ACC-053` requires every in-scope item to reach a terminal disposition, and `prompts/migration-completion-audit.md` requires residual exceptions to be owned — but nothing yet defines how many unresolved or failed items are tolerable, or who owns them. |
 | OD-022 | Operator authentication model for approval | MAJOR | `implementation` | `live` | Added during audit resolution. Resolving FND-M004 required binding every approval to an authenticated operator identity and session, but V1 scope never stated an operator authentication requirement — the Sentinel was the only component required to authenticate. `docs/02-specification/approval-binding-model.md` proposes a minimal local single-user model (loopback-only surfaces, a principal registry, approval-time re-authentication, session binding, backend-issued challenge). The operator decides whether to adopt that shape, tighten it, or scope it differently. |
+| OD-023 | G4 plan promotability | MAJOR | `dry_run` | — | Added during Build Ladder generation, from planning finding PF-25. A capability descriptor is valid only if measured; measuring a **destination** descriptor requires a write; G4 authorizes no write anywhere. A G4 dry-run plan is therefore structurally incapable of carrying a valid destination descriptor. Decide whether such a plan may ever be promoted to execution, or whether destination characterization must open G5. The ladder assumes the latter (FBL-073) and states the assumption rather than deciding it. |
+| OD-024 | Symlink and hard-link reproduction scope | MAJOR | `implementation` | `live` | Added during Build Ladder generation, from planning finding PF-08. Operation entry types are copy, move, rename, quarantine, skip. The identity model requires a symlink-recreation type **or** an explicit out-of-scope declaration with a stop condition — neither exists — and the preservation model requires linking the remainder of a hard-link set, which no entry type can express. Decide whether V1 reproduces links faithfully or declares link reproduction out of scope. |
 
 ## Gate coverage
 
@@ -46,8 +48,8 @@ A decision blocks its named gate and every later gate until it is resolved. **Re
 | --- | --- | --- |
 | `foundation` | 0 | — |
 | `build_ladder` | 0 | — |
-| `implementation` | 6 | OD-004, OD-014, OD-017, OD-018, OD-019, OD-022 |
-| `dry_run` | 7 | OD-001, OD-002, OD-003, OD-005, OD-011, OD-012, OD-016 |
+| `implementation` | 7 | OD-004, OD-014, OD-017, OD-018, OD-019, OD-022, OD-024 |
+| `dry_run` | 8 | OD-001, OD-002, OD-003, OD-005, OD-011, OD-012, OD-016, OD-023 |
 | `pilot` | 2 | OD-007, OD-008 |
 | `live` | 5 | OD-006, OD-009, OD-013, OD-015, OD-020 |
 | `retirement` | 1 | OD-010 |
@@ -59,5 +61,6 @@ A decision blocks its named gate and every later gate until it is resolved. **Re
 
 1. Record operator answers in the affected policy and specification documents.
 2. Reclassify provisional rules only after explicit confirmation (OD-012). Until then provisional rules are structurally incapable of automatic execution — see `docs/02-specification/rule-model.md` and `config/schemas/classification-rule-set.schema.json`.
-3. Update this register when each ID is resolved (Resolved / Won't-do with rationale), and re-confirm at the gate named in the **Re-confirm at** column.
-4. Severity states consequence if the decision is wrong. `blocks_gate` states which gate the decision stops. They are independent and must not be conflated.
+3. Rungs blocked by each decision are named in `docs/handoffs/build-ladder.md`. A rung whose **Blocked by** field names an unresolved decision cannot start.
+4. Update this register when each ID is resolved (Resolved / Won't-do with rationale), and re-confirm at the gate named in the **Re-confirm at** column.
+5. Severity states consequence if the decision is wrong. `blocks_gate` states which gate the decision stops. They are independent and must not be conflated.

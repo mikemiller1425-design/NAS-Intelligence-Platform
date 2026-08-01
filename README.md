@@ -10,17 +10,18 @@ Years of downloads, device dumps, media, documents, and project files accumulate
 
 ## Current phase
 
-**Blueprint / Foundation Candidate `1.0-rc2` — audit findings resolved, awaiting independent verification**
+**Foundation `1.0` — APPROVED (G1). Build Ladder generated under G2, awaiting independent review.**
 
 Authorization is defined once, in `docs/05-governance/gate-model.md`. Eight gates, each requiring its own dated, operator-signed record. **No gate authorizes the next**, and absence of an authorization record is a prohibition, not a gap.
 
 | Gate | Status |
 | --- | --- |
 | Independent audit | Complete — twelve findings, all resolved, none waived |
-| Independent verification of resolutions | **Required next** |
-| G1 `foundation` — Foundation 1.0 approval | **Not approved** |
-| G2 `build_ladder` | **Not authorized** |
-| G3 `implementation` (fixture-only) | **Not authorized** |
+| Independent verification of resolutions | Complete — VER-B001 raised and corrected |
+| G1 `foundation` — Foundation 1.0 approval | **GRANTED** 2026-08-01 at `54ec3a8` |
+| G2 `build_ladder` | **GRANTED** separately from G1 |
+| Independent review of the Build Ladder | **Required next** |
+| G3 `implementation` (fixture-only) | **Not authorized** — granted per rung |
 | G4 `dry_run` | **Not authorized** — first gate that touches the real NAS, and only to read |
 | G5 `pilot` · G6 `live` · G7 `retirement` · G8 `migration_completion` | **Not authorized** |
 
@@ -88,8 +89,8 @@ After validation — Normalize and deduplicate
 | `docs/06-operations/` | Dry-run, pilot, live, rollback, incident, Sentinel |
 | `docs/source/` | Original operator source material |
 | `docs/migration/` | Source inventory, reconciliation, traceability |
-| `docs/handoffs/` | Audit and build-ladder handoffs |
-| `docs/audits/` | Independent audit findings |
+| `docs/handoffs/` | Audit and build-ladder handoffs, and the generated Build Ladder |
+| `docs/audits/` | Independent audit and verification findings |
 | `docs/future-registry/` | Explicitly deferred concepts |
 | `config/` | Non-production example rules, taxonomy, exclusions, and the canonical rule schema |
 | `apps/` | Future CLI, review console, Sentinel (placeholders) |
@@ -114,8 +115,8 @@ See `docs/05-governance/authority-order.md`.
 
 ## Implementation authorization status
 
-**Blocked.** Do not begin production implementation. Do not generate a Build Ladder. Foundation approval (G1), Build Ladder generation (G2), and each implementation rung (G3) are three separate authorizations; none implies the next.
+**Blocked.** Foundation approval (G1) and Build Ladder generation (G2) are granted; see `docs/05-governance/authorization-ledger.md`. Neither authorizes implementation. Each implementation rung requires its own G3 authorization, and authorization of rung N never authorizes rung N+1.
 
 ## Exact next action
 
-**Independent verification of the audit resolutions at the current commit.** Do not hand this repository to Claude Code for Build Ladder generation until that verification is complete, Foundation 1.0 is explicitly approved, and Build Ladder generation is separately authorized.
+**Independent review of the Build Ladder** at `docs/handoffs/build-ladder.md`. No rung may be implemented until that review is complete and the operator authorizes that specific rung at gate G3.

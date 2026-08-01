@@ -17,6 +17,9 @@ Maps significant source concepts to authoritative active destinations. Status va
 | Durability, crash consistency, recovery | Audit FND-M003 | `docs/02-specification/durability-and-recovery-model.md`, ADR-016 | Present |
 | Approval binding and anti-replay | Audit FND-M004 | `docs/02-specification/approval-binding-model.md`, ADR-017 | Present |
 | Authorization gate model | Audit FND-B001, FND-m003 | `docs/05-governance/gate-model.md`, `docs/04-acceptance/foundation-acceptance.md` | Present |
+| Gate authorization records | Gate model | `docs/05-governance/authorization-ledger.md` | Present — G1 and G2 granted |
+| Implementation sequencing | Handoff 003 | `docs/handoffs/build-ladder.md` (79 rungs) | Present |
+| Planning findings from ladder generation | Build Ladder generation | `docs/handoffs/build-ladder.md` — Planning findings (PF-01…PF-31) | Open — routed to change control and OD-023/OD-024 |
 | Dogs domain precedence | SRC-001 / assignment | `config/rules/classification-rules.example.yaml`, OD-012 | Provisional — structurally advisory-only until OD-012 closes |
 | Drone routing | SRC-001 | same | Provisional — structurally advisory-only until OD-012 closes |
 | CSV / structured routing | SRC-001 | same | Provisional — structurally advisory-only until OD-012 closes |
