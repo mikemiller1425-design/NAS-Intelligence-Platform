@@ -221,6 +221,13 @@ for _f in REPO.rglob("*"):
     if _f.is_file() and ".git" not in _f.parts:
         BASENAMES.setdefault(_f.name, []).append(_f)
 for p, rel in active_md():
+    # docs/proposals/ is the non-authoritative remediation workbench. Its packets
+    # legitimately name files they propose creating, so an unresolved path there
+    # is not necessarily a defect. That tree has its own link check, in
+    # scripts/validate_proposals.py, which distinguishes a proposed artifact from
+    # a broken reference by requiring the naming line to say which it is.
+    if rel.startswith("docs/proposals/"):
+        continue
     txt = p.read_text(errors="replace")
     for m in re.finditer(r"\[[^\]]*\]\(([^)]+)\)", txt):
         tgt = m.group(1).split("#")[0].strip()
