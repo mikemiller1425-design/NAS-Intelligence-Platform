@@ -103,19 +103,28 @@ Gates are ordered. Each gate has its own entry criteria, evidence, and approval.
 
 ### G4 — Dry-Run Readiness (`dry_run`)
 
-**Authorizes:** Read-only inventory and non-mutating plan generation against confirmed source roots.
+**Authorizes:**
+- **Read-only** traversal of confirmed NAS source roots — inventory, hashing, metadata extraction, rule evaluation, destination proposal, conflict detection.
+- Writes **confined to one operator-approved local control-data root**: manifests, plans, reports, queues, journals, checkpoints, and evidence artifacts.
 
-**Explicitly does NOT authorize:** any write, copy, move, rename, or delete anywhere; writing into destination trees.
+> **The read-only guarantee is about NAS data paths, not about the machine.** A dry run that cannot persist local evidence cannot prove it ran. Earlier wording said "no write anywhere", which contradicted this gate's own entry criteria and the Definition of Done, and made the required evidence impossible to produce.
+
+**Explicitly does NOT authorize:**
+- any create, update, delete, rename, or **write-based probe** on **any NAS path**, source or destination;
+- writing into destination trees;
+- any write outside the approved control-data root;
+- destination capability characterization, which requires a write and therefore remains at G5 (see PF-25 and OD-023).
 
 **Entry criteria:**
 1. G3 passed for all rungs required by the dry-run path, with fixture evidence.
 2. Source roots are confirmed by the operator (OD-001, OD-013).
 3. Rule set version is frozen and validates against the canonical schema.
-4. Control-data location is outside every recursively scanned source path.
-5. Adapter selection is resolved (OD-016) for the environment in use.
-6. No open decision classified `blocks_gate: dry_run` remains unresolved.
+4. **One control-data root is approved by the operator and proven disjoint** from every NAS mount, source root, destination root, and recursive scan boundary. Any overlap, or any uncertainty about overlap, is an immediate stop — not a warning.
+5. Read-only credentials are issued and are distinct from any mutation-capable credential.
+6. Adapter selection is resolved (OD-016) for the environment in use.
+7. No open decision classified `blocks_gate: dry_run` remains unresolved.
 
-**Required evidence:** fixture acceptance results; confirmed root list; frozen rule-set version and hash; control-data path declaration.
+**Required evidence:** fixture acceptance results; confirmed root list; frozen rule-set version and hash; control-data root declaration **with its disjointness proof**; a journal or evidence record of **every** local control-plane write.
 
 **Approver:** Operator.
 

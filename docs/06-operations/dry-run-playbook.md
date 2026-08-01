@@ -19,7 +19,7 @@ Executing anything in this document requires a current, dated, operator-signed a
 ## Preconditions
 - Source roots are confirmed.
 - Read-only credentials are available.
-- Control-data storage is outside recursively scanned source roots.
+- One approved control-data root, proven disjoint from every NAS mount, source root, destination root, and recursive scan boundary. NAS paths are read-only; local control-plane writes go only into this root and are each journalled.
 - Rule set version is frozen for the run.
 - Snapshot and recovery posture are recorded, even though dry run does not depend on them for safety.
 

@@ -17,7 +17,7 @@ Every rung carries the same field set, so a rung can be handed to an implementer
 | Field | Meaning |
 | --- | --- |
 | **Gate** | The authorization gate under which this rung is performed. |
-| **NAS access** | `none`, `read-only`, or `bounded-write`. Default and overwhelming majority: `none`. |
+| **NAS access** | `none`, `read-only`, or `bounded-write`. Default and overwhelming majority: `none`. **This field describes access to NAS data paths only.** Writes to an approved local control-data root are governed separately by the gate model and are never NAS access. |
 | **Objective** | What the rung is for, in one sentence. |
 | **Why here** | The specific artifact or invariant that forces this position. Not "it makes sense" — the forcing dependency. |
 | **Prerequisites** | Rungs that must be complete and inspected first. |
@@ -46,8 +46,8 @@ Every rung carries the same field set, so a rung can be handed to an implementer
 Every rung at gate G3 carries these without restating them:
 
 - **Synthetic fixtures only.** No fixture may derive from live NAS data.
-- **No NAS access.** No mount, path, hostname, share name, or credential.
-- **No live paths** in code, configuration, tests, or fixtures.
+- **No NAS access.** The running system contacts no mount, share, or endpoint.
+- **Path and secret policy applies**, per `docs/05-governance/path-policy.md`: secrets are forbidden everywhere with no exemption; literal live NAS paths are forbidden in executable code, configuration, positive fixtures, and generated artifacts, also with no exemption; approved inert documentation and the deliberately invalid negative fixtures may contain such patterns solely to document or prove rejection.
 - **No authorization of the next rung.** Completing a rung produces evidence; it grants nothing.
 
 Where a rung restates one of these, it is because that rung is the one most likely to be tempted.
@@ -57,7 +57,7 @@ Where a rung restates one of these, it is because that rung is the one most like
 | Gate | Rungs | Count | Character |
 | --- | --- | --- | --- |
 | G3 `implementation` | FBL-001 … FBL-070 | 70 | Fixture-only. **No NAS contact of any kind.** |
-| G4 `dry_run` | FBL-071 … FBL-072 | 2 | First real NAS contact. **Read-only.** No write anywhere. |
+| G4 `dry_run` | FBL-071 … FBL-072 | 2 | First real NAS contact. **NAS paths strictly read-only.** Local writes confined to one approved control-data root, outside every NAS boundary. |
 | G5 `pilot` | FBL-073 | 1 | Isolated copied corpus. Never the authoritative source. |
 | G6 `live` | FBL-074 … FBL-075 | 2 | Bounded, approved copies. **No retirement.** |
 | G7 `retirement` | FBL-076 | 1 | Verified source retirement. **Never deletion.** |
@@ -93,26 +93,26 @@ Every rung in this section is `NAS access: none`.
 | --- | --- |
 | Gate | G3 |
 | NAS access | none |
-| Objective | Reproducible toolchain, one test entry point, a hashed evidence-package emitter, and automated CI guards that no file references a NAS path, mount, hostname, credential, or share name. |
-| Why here | Rung 1's own Definition of Done requires "the rung's evidence package is complete and hashed", so the emitter must exist to satisfy the rung that builds it. The CI guard is the only mechanical barrier against an accidental pre-G4 live touch; every later rung inherits it. |
+| Objective | Reproducible toolchain, one test entry point, a hashed evidence-package emitter, and a **class-aware** path guard enforcing `docs/05-governance/path-policy.md` — secrets forbidden everywhere, literal live paths forbidden in runtime surfaces, approved inert documentation and negative fixtures permitted to carry them. |
+| Why here | Rung 1's own Definition of Done requires "the rung's evidence package is complete and hashed", so the emitter must exist to satisfy the rung that builds it. The path guard is the only mechanical barrier against an accidental pre-G4 live touch; every later rung inherits it. It must be **class-aware from the outset** — a guard that scans every file for every pattern cannot produce a green baseline on this repository. |
 | Prerequisites | none |
 | Blocked by | none |
-| Allowed work | Project scaffold; dependency manifest and lockfile (this rung's authorization is what first makes a lockfile legal); lint, type-check, test runners; single entry point; evidence emitter producing stable ID, timestamp, source of truth, integrity marker, phase, conclusion; CI guards for live-path and secret patterns; wire in `validate_rule_config.py` and `foundation_self_review.py`. |
-| Prohibited work | Any domain logic. Docker, task queues, or distributed infrastructure. |
-| Specifications | `evidence-standard.md` |
+| Allowed work | Project scaffold; dependency manifest and lockfile (this rung's authorization is what first makes a lockfile legal); lint, type-check, test runners; single entry point; evidence emitter producing stable ID, timestamp, source of truth, integrity marker, phase, conclusion; a **class-aware** path guard enforcing `docs/05-governance/path-policy.md`; wire in `validate_rule_config.py`, `foundation_self_review.py`, and `check_path_policy.py`. |
+| Prohibited work | Any domain logic. Docker, task queues, or distributed infrastructure. **Widening the path policy, or adding any exemption not declared in `docs/05-governance/path-policy.md`.** A guard that scans every file for every pattern — that is the defect this rung exists to avoid. |
+| Specifications | `evidence-standard.md`, `path-policy.md` |
 | ADRs | ADR-007 |
-| Acceptance | SAF-005, SAF-006, V1-ACC-042 (repo half), PILOT-014 (emitter half) |
+| Acceptance | SAF-005, SAF-006, SAF-007 (policy half), V1-ACC-042 (repo half), PILOT-014 (emitter half) |
 | Files affected | `pyproject.toml`, lockfile, `Makefile`, CI config, `scripts/`, `packages/observability/` |
-| Deliverables | Reproducible env; evidence emitter; CI safety guards; green baseline. |
+| Deliverables | Reproducible env; evidence emitter; class-aware path guard enforcing `path-policy.md`; green baseline on the repository as it stands. |
 | Positive tests | Fresh clone reaches green; emitter output satisfies the evidence standard's six fields. |
-| Negative tests | A file containing a NAS volume path, a share name, a hostname, or a credential pattern fails CI. A malformed rule set fails the pipeline non-zero. |
+| Negative tests | All five path-policy tests pass in both directions: a literal live path planted in a Class B runtime surface fails; a credential fails even in a Class C path; the repository as it stands passes; the negative rule fixtures still contain literal live paths and are still rejected by the rule validator; and an attempted exemption for executable code is refused. A malformed rule set fails the pipeline non-zero. |
 | Failure-injection tests | Missing dependency and missing lockfile fail loudly rather than degrading silently. |
 | Operator validation | Operator runs the entry point on a clean machine and gets the same result. |
 | Evidence package | Tool versions; lockfile hash; baseline output; CI guard demonstration. |
 | Rollback / recovery | Revert; no persistent state. |
 | Stop conditions | A dependency cannot be pinned reproducibly. |
 | Definition of Ready | G3 authorization for FBL-001; ladder frozen. |
-| Definition of Done | One command runs lint, types, tests, both validators, and the safety guards, green. |
+| Definition of Done | One command runs lint, types, tests, every validator, and the path guard, green — **including a green path-policy baseline on the repository exactly as it stands**, with its approved inert documentation and its deliberately invalid negative fixtures untouched. |
 | Git boundary | One commit: tooling only. |
 | Enables | FBL-002, FBL-006 |
 
@@ -2085,7 +2085,11 @@ Every rung in this section is `NAS access: none`.
 
 ## Gate G4 — Dry-Run Readiness
 
-**The first gate at which the system touches the real NAS, and it may only read.** No write of any kind, anywhere, including into destination trees.
+**The first gate at which the system touches the real NAS, and NAS paths may only be read.**
+
+No create, update, delete, rename, or write-based probe on any NAS path — source or destination. Local writes are permitted **only** into one operator-approved control-data root proven disjoint from every NAS mount, source root, destination root, and scan boundary. Every such write is journalled or included in evidence. Any overlap, or uncertainty about overlap, is an immediate stop.
+
+Destination capability characterization requires a write and therefore remains at G5 (PF-25, OD-023).
 
 ### FBL-071 — Controlled read-only NAS adapter enablement and source characterization
 
@@ -2098,19 +2102,19 @@ Every rung in this section is `NAS access: none`.
 | Prerequisites | FBL-070 |
 | Blocked by | **OD-001, OD-002, OD-003, OD-005, OD-011, OD-012, OD-016** — all seven carry `blocks_gate: dry_run` |
 | Allowed work | Read-only mount or connection; source-root characterization; live source descriptor; identity-grade measurement; read-only credential use. |
-| Prohibited work | **Any write, anywhere.** Writing into destination trees. Hashing beyond what characterization requires. Any mutation-capable credential. |
+| Prohibited work | **Any write to any NAS path**, source or destination, including a write-based probe. Any write outside the approved control-data root. Hashing beyond what characterization requires. Any mutation-capable credential. |
 | Specifications | `preservation-model.md`, `file-identity-model.md`, `adapter-architecture.md` |
 | ADRs | ADR-012, ADR-001 |
 | Acceptance | LIVE-003 (support), V1-ACC-007 |
 | Files affected | Evidence artifacts only |
 | Deliverables | Live source capability descriptor with attestation. |
 | Positive tests | The descriptor is complete for every measurable source-side property. |
-| Negative tests | Any write attempt fails and halts. A destination-side property is recorded `unsupported_reported`, not assumed — **see PF-25: the destination descriptor is not obtainable at G4 at all.** |
+| Negative tests | Any write to a NAS path fails and halts. A write outside the approved control-data root fails and halts. A control root overlapping any NAS mount, source root, destination root, or scan boundary is an immediate stop. A destination-side property is recorded `unsupported_reported`, not assumed — **see PF-25: the destination descriptor is not obtainable at G4 at all.** |
 | Failure-injection tests | Connection loss mid-characterization. |
 | Operator validation | Operator confirms read-only credentials and reviews `retirement_capable`. |
 | Evidence package | Live source descriptor; attestation; read-only proof. |
 | Rollback / recovery | Disconnect; nothing was written. |
-| Stop conditions | Any write is attempted. Any property requires a write to measure. |
+| Stop conditions | Any write to a NAS path is attempted. The control root overlaps any NAS boundary, or its disjointness is uncertain. Any property requires a write to measure. |
 | Definition of Ready | G4 authorization recorded in the ledger; all seven dry-run decisions resolved. |
 | Definition of Done | Live source descriptor measured; zero writes. |
 | Git boundary | One commit: evidence only, no code. · **Enables** FBL-072 |
@@ -2126,19 +2130,19 @@ Every rung in this section is `NAS access: none`.
 | Prerequisites | FBL-071 |
 | Blocked by | **PF-25** (a G4 plan cannot carry a measured destination descriptor and is therefore not promotable) |
 | Allowed work | Read-only inventory; hashing; metadata extraction; rule evaluation; destination proposal; conflict detection; hashed evidence index. |
-| Prohibited work | **Any write.** Treating a G4 plan as executable. Retirement proposals becoming actions. |
+| Prohibited work | **Any write to any NAS path**, including a write-based probe. Any write outside the approved control-data root. Treating a G4 plan as executable. Retirement proposals becoming actions. |
 | Specifications | `dry-run-playbook.md`, `operation-model.md` |
 | ADRs | **ADR-009** |
 | Acceptance | **V1-ACC-001, V1-ACC-030**, V1-ACC-041 |
 | Files affected | Evidence artifacts only |
 | Deliverables | Inventory manifest; dry-run plan marked descriptor-incomplete; rule coverage, conflict, unresolved reports; evidence index. |
 | Positive tests | Repeated scan is deterministic; destination tree unchanged. |
-| Negative tests | Any write fails. A G4 plan presented as promotable fails. Source property-set comparison shows no mutation — **hashes alone are insufficient here, per PF-13**. |
+| Negative tests | Any write to a NAS path fails. Any write outside the approved control-data root fails. A G4 plan presented as promotable fails. Source property-set comparison shows no mutation — **hashes alone are insufficient here, per PF-13**. |
 | Failure-injection tests | Interrupt mid-scan; resume without duplicate identities. |
 | Operator validation | Operator reviews the plan and confirms the destination tree is untouched. |
 | Evidence package | The full G4 bundle per the dry-run playbook, with stop-condition evaluation records. |
-| Rollback / recovery | Delete control-data artifacts; sources untouched. |
-| Stop conditions | Any mutation. Any stop condition passed unevaluated. |
+| Rollback / recovery | Delete artifacts inside the approved control-data root; NAS sources untouched. |
+| Stop conditions | Any NAS mutation. Any write outside the approved control-data root. Any stop condition passed unevaluated. |
 | Definition of Ready | FBL-071 complete; PF-25 resolved. |
 | Definition of Done | Complete G4 bundle; determinism and zero-mutation proven. |
 | Git boundary | One commit: evidence only. · **Enables** FBL-073 |
@@ -2398,7 +2402,7 @@ A rung whose **Blocked by** field names a finding cannot start until that findin
 | PF-22 | BLOCKER | The write protocol is designated authoritative and must not be substituted — yet it never captures or compares the pre- and post-copy change tokens. This contradicts the identity model's requirement that promotion occur only after **both** destination hash equality and token equality. An implementer following the authoritative protocol ships the concurrent-modification fixture broken. | FBL-048 | Change control: add token capture and comparison to protocol phases C, D, and E. |
 | PF-23 | BLOCKER | `VerificationResult` carries only source and destination hashes — no preservation-report reference and no token evidence — despite three documents requiring both before an operation may be called verified. | FBL-052 | Change control: extend the entity. |
 | PF-24 | BLOCKER | `PreservationComparisonReport` has a defined schema in the preservation model but no domain entity; `VerificationResult` is a different shape. | FBL-053 | Change control: add the entity. |
-| PF-25 | BLOCKER | **A measured destination descriptor cannot be produced at G4.** A descriptor is valid only if measured; measuring it requires an NFD write-and-read-back; G4 explicitly authorizes no write anywhere. Yet G4 is where plans are generated, and a plan must carry the destination descriptor at approval. **G4 dry-run plans are therefore structurally incapable of carrying a valid destination descriptor.** | FBL-072, FBL-073 | Change control **and** operator decision — recorded as **OD-023**. This ladder assumes the resolution is: G4 plans are marked descriptor-incomplete and non-promotable, and destination characterization is the first G5 activity (FBL-073). That assumption is stated, not decided. |
+| PF-25 | BLOCKER | **A measured destination descriptor cannot be produced at G4.** A descriptor is valid only if measured; measuring it requires an NFD write-and-read-back **to the destination**; and G4 authorizes no write to any NAS path, destination trees included. (G4 does permit local control-data writes — that is BLOCKER-02's correction — but a control-data write cannot characterize a NAS destination.) Yet G4 is where plans are generated, and a plan must carry the destination descriptor at approval. **G4 dry-run plans are therefore structurally incapable of carrying a valid destination descriptor.** | FBL-072, FBL-073 | Change control **and** operator decision — recorded as **OD-023**. This ladder assumes the resolution is: G4 plans are marked descriptor-incomplete and non-promotable, and destination characterization is the first G5 activity (FBL-073). That assumption is stated, not decided. |
 
 ### Major findings
 

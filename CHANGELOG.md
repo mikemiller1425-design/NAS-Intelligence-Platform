@@ -2,6 +2,75 @@
 
 All notable foundation and architectural decisions for the NAS Intelligence Platform are recorded here.
 
+## [1.1.1] — 2026-08-01
+
+### Documentation-only correction of two independent-review blockers
+
+An independent Build Ladder review of `8c27192` returned **NOT READY TO FREEZE**, with two
+specification defects that made required work impossible as written. Both are wording and scope
+defects in the safety controls — **not** permission to weaken them. This pass corrects them under
+G2 authority only. No rung was implemented, no NAS was accessed, and no gate was authorized.
+
+**BLOCKER-01 — the live-path guard could not produce a green baseline.**
+FBL-001, the standing G3 rules, the Definition of Done, and the inspection prompt all prohibited any
+NAS path or share name in *every* repository file. The approved repository intentionally contains
+`/volume1` references in specifications and migration history, and negative fixtures whose entire
+purpose is to carry a literal live path and prove it is rejected. Eleven files would have failed the
+guard. A conforming implementation would have failed its own baseline, deleted authoritative
+evidence, or added undocumented exclusions.
+
+Corrected by adding `docs/05-governance/path-policy.md` — one machine-testable policy with three
+artifact classes:
+
+- **Class A, secrets** — forbidden everywhere, *no exemption mechanism exists*.
+- **Class B, runtime and executable surfaces** — literal live paths forbidden, **no exemptions**.
+  This is structural: a scanner needing a forbidden pattern reads it from the policy at runtime
+  rather than embedding a literal, so no executable artifact ever needs exempting. Enforced by
+  rejecting any exemption entry that names a Class B path.
+- **Class C, inert evidence** — approved specification, governance, audit, and migration documents,
+  and the deliberately invalid negative fixtures, may carry literals solely to document or prove
+  rejection. Each exemption is declared, narrow, and reviewable.
+
+`scripts/check_path_policy.py` enforces it and proves all five required tests in both directions.
+Applying it caught three real violations in this repository's own tooling, now fixed: the ladder
+validator and the fixture generator embedded literal patterns, and the policy checker's own
+credential sample tripped its own scanner. All three now read or assemble their patterns instead.
+
+**BLOCKER-02 — G4 said "no write anywhere" while requiring local control-plane output.**
+The gate model forbade "any write, copy, move, rename, or delete anywhere", while the same gate's
+entry criteria required a control-data location and the Definition of Done already anticipated
+writes inside control-data storage. A dry run that cannot persist local evidence cannot prove it ran.
+
+Corrected so that G4 is read-only **with respect to NAS data paths**, and may write **only** into one
+operator-approved local control-data root proven disjoint from every NAS mount, source root,
+destination root, and recursive scan boundary. Every control-plane write is journalled or included
+in evidence. Overlap, or uncertainty about overlap, is an immediate stop. No write-based NAS probing.
+Destination characterization still requires a write and therefore remains at G5 under PF-25/OD-023.
+
+The ladder's `NAS access` field now states explicitly that it describes NAS data paths only, and
+that local control-data writes are governed separately.
+
+### Changed
+
+- `docs/05-governance/path-policy.md` — new, authoritative.
+- `scripts/check_path_policy.py` — new; five required proofs, both directions.
+- `scripts/validate_build_ladder.py` — checks 18–20 added for both blockers; live patterns now read
+  from the policy.
+- `scripts/generate_negative_rule_fixtures.py` — sample live root read from the policy; fixtures
+  regenerated and still rejected for the same reason.
+- `docs/05-governance/gate-model.md`, `definition-of-done.md`, `definition-of-ready.md`,
+  `open-decisions.md` (OD-023 rationale), `docs/06-operations/dry-run-playbook.md`,
+  `docs/handoffs/build-ladder.md`, `prompts/independent-rung-inspection.md`.
+- PF-25 restated: the destination descriptor needs a write **to the destination**, which G4 still
+  forbids. The finding stands; only its premise was inaccurate after BLOCKER-02.
+
+### Unchanged
+
+- No implementation code. No NAS access. No rung authorized. G3–G8 remain unauthorized.
+- Secret, live-path-in-runtime, and NAS-mutation protections are **narrowed in scope, not weakened**:
+  every class that was forbidden before is still forbidden, and Class A gained an explicit
+  no-exemption guarantee it did not have.
+
 ## [1.1] — 2026-08-01
 
 ### Foundation 1.0 approved; Build Ladder generated

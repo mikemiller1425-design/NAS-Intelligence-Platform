@@ -35,7 +35,7 @@ Gate IDs are defined in `docs/05-governance/gate-model.md` and match the `blocks
 - All rungs the dry run exercises are complete on fixtures and independently inspected.
 - Source roots are confirmed (OD-001, OD-013) and read-only inventory scope is defined.
 - Rule set and taxonomy versions are frozen (OD-002, OD-012) and validate against `config/schemas/classification-rule-set.schema.json`.
-- Control-data location is outside every recursively scanned source path (OD-005, OD-014).
+- One control-data root is approved and **proven disjoint** from every NAS mount, source root, destination root, and recursive scan boundary (OD-005, OD-014). Uncertainty about overlap is a stop, not a warning.
 - Read-only credentials are issued and are distinct from any mutation-capable credential.
 - Adapter selection is resolved for the environment in use (OD-016).
 - Identity handling and derived-artifact retention policies are resolved (OD-003, OD-011), or the corresponding features are provably disabled.

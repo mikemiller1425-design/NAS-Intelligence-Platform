@@ -32,7 +32,7 @@
 
 - Only the named rung's files changed.
 - Every `V1-ACC-*` row carrying `Gate = implementation` within the rung's scope passes on synthetic fixtures.
-- No test, config, default, or fixture references a NAS path, mount, hostname, credential, or share name.
+- The path and secret policy holds, per `docs/05-governance/path-policy.md`: no secret anywhere; no literal live NAS path in executable code, configuration, positive fixtures, or generated artifacts; and no exemption beyond those declared in that policy.
 - The rung's evidence package is complete and hashed.
 - An independent rung inspection verdict exists per `prompts/independent-rung-inspection.md`.
 - Remaining blockers are stated, not deferred silently.
@@ -41,7 +41,7 @@
 
 - Inventory manifest, dry-run plan, rule coverage report, conflict report, unresolved queue, and hashed evidence index all exist.
 - A repeated scan demonstrates deterministic identity and zero source mutation.
-- No filesystem write occurred anywhere outside control-data storage.
+- No write occurred on any NAS path, and no write occurred outside the approved control-data root. The root's disjointness from every NAS boundary is evidenced, and every control-plane write is journalled or included in evidence.
 - Every stop condition in `docs/06-operations/dry-run-playbook.md` was evaluated, and none was silently passed.
 
 ## Done for a pilot (`pilot`, G5)

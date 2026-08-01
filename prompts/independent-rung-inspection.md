@@ -34,7 +34,7 @@ Independently inspect one completed rung for correctness, safety, and scope disc
 
 ### Safety
 
-4. No NAS path, mount, hostname, share name, or credential appears anywhere in the diff.
+4. The diff satisfies `docs/05-governance/path-policy.md`. No secret appears anywhere. No literal live NAS path appears in executable code, configuration, a positive fixture, or a generated artifact. A literal path in approved inert documentation or in a deliberately invalid negative fixture is **not** a finding — that is what those artifacts are for. An added or widened exemption **is** a finding.
 5. No fixture derives from live data.
 6. No safety control was weakened, disabled, or marked pending to make a test pass.
 7. For any mutation-capable code: a durable intent record precedes the mutation, per `docs/02-specification/durability-and-recovery-model.md`.

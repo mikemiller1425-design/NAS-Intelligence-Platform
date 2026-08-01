@@ -46,6 +46,26 @@ GATE_NAS = {
 
 fails: list[str] = []
 
+def _live_patterns() -> list[str]:
+    """Read forbidden live-path patterns from the governance policy.
+
+    Read rather than embedded so this file contains no literal live path and
+    therefore needs no Class B exemption. See docs/05-governance/path-policy.md.
+    """
+    policy = REPO / "docs" / "05-governance" / "path-policy.md"
+    if not policy.exists():
+        return []
+    text = policy.read_text()
+    start = text.find("### Live path patterns")
+    if start == -1:
+        return []
+    body = text[start:]
+    end = body.find("\n### ")
+    return re.findall(r"^\| `(.+?)` \|", body if end == -1 else body[:end], re.M)
+
+
+
+
 
 def check(num: int, name: str, ok: bool, detail: str = "") -> None:
     print(f"[{'PASS' if ok else 'FAIL'}] {num:2}. {name}")
@@ -217,8 +237,8 @@ def main() -> int:
 
     # 15 — no live NAS path anywhere in the ladder
     live = []
-    for pat in [r"/volume1", r"smb://", r"nfs://", r"afp://", r"ssh://"]:
-        for m in re.finditer(pat, text):
+    for pat in _live_patterns():
+        for m in re.finditer(re.escape(pat), text):
             line = text[:m.start()].count("\n") + 1
             live.append(f"build-ladder.md:{line}: {pat}")
     check(15, "SAFETY — no live NAS path in the ladder", not live, "\n".join(live))
@@ -235,6 +255,50 @@ def main() -> int:
     absent = [n for n in need if n.lower() not in text.lower()]
     check(17, "The ladder states explicitly that it authorizes nothing",
           not absent, f"missing statements: {absent}")
+
+    # 18 — no surviving "no write anywhere" wording (BLOCKER-02)
+    #
+    # G4 must write local control-plane evidence. Absolute no-write wording
+    # contradicted this gate's own entry criteria and the Definition of Done,
+    # and made the required evidence impossible to produce.
+    bad18 = []
+    for doc in [LADDER,
+                REPO / "docs/05-governance/gate-model.md",
+                REPO / "docs/05-governance/definition-of-done.md",
+                REPO / "docs/06-operations/dry-run-playbook.md"]:
+        if not doc.exists():
+            continue
+        dt = doc.read_text()
+        for m in re.finditer(r"[Nn]o write(?:s)?(?: of any kind)? anywhere", dt):
+            line = dt[:m.start()].count("\n") + 1
+            ctx = dt[max(0, m.start() - 120):m.start() + 120]
+            if "NAS path" in ctx or "control-data root" in ctx:
+                continue  # correctly qualified
+            if any(w in ctx for w in ("Earlier wording", "previously", "superseded",
+                                      "replaced", "contradicted")):
+                continue  # a quotation of the wording that was corrected, not a survival
+            bad18.append(f"{doc.relative_to(REPO)}:{line}: unqualified no-write-anywhere wording")
+    check(18, "BLOCKER-02 — no unqualified 'no write anywhere' wording survives",
+          not bad18, "\n".join(bad18))
+
+    # 19 — G4 states the control-data root rule
+    g4 = text[text.index("## Gate G4"):text.index("## Gate G5")] if "## Gate G4" in text else ""
+    need19 = ["control-data root", "read", "disjoint"]
+    miss19 = [n for n in need19 if n.lower() not in g4.lower()]
+    check(19, "BLOCKER-02 — G4 states the read-only NAS rule and the control-root rule",
+          not miss19, f"missing from the G4 section: {miss19}")
+
+    # 20 — the ladder defers to the path policy rather than restating an absolute ban
+    policy = REPO / "docs/05-governance/path-policy.md"
+    bad20 = []
+    if not policy.exists():
+        bad20.append("docs/05-governance/path-policy.md missing")
+    if "path-policy.md" not in text:
+        bad20.append("ladder does not reference the path policy")
+    for m in re.finditer(r"No live paths\*\* in code, configuration, tests, or fixtures", text):
+        bad20.append("ladder still carries the unsatisfiable absolute live-path rule")
+    check(20, "BLOCKER-01 — the ladder defers to the class-aware path policy",
+          not bad20, "\n".join(bad20))
 
     print("=" * 78)
     print("RESULT: ALL CHECKS PASSED" if not fails else f"RESULT: {len(fails)} FAILING CHECK(S)")

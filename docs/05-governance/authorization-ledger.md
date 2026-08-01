@@ -36,7 +36,7 @@ It authorizes:
 - Mounting, accessing, scanning, hashing, or analysing any NAS path.
 - Copying, moving, renaming, quarantining, retiring, overwriting, or deleting any file.
 - Generating live configuration.
-- Resolving any operator policy decision (OD-001 … OD-022).
+- Resolving any operator policy decision (OD-001 … OD-024).
 - Any dry-run, pilot, live, retirement, or completion activity.
 
 **Foundation 1.0 approval is not implementation authorization.** These are different gates with different evidence and different records.
@@ -67,6 +67,12 @@ It authorizes:
 - Any filesystem mutation outside the repository.
 - Generating live configuration.
 - Resolving operator policy decisions.
+
+> **Post-generation correction, 2026-08-01.** An independent review of the Build Ladder at
+> `8c27192` returned two blocking specification defects (BLOCKER-01, overbroad live-path guard;
+> BLOCKER-02, G4 no-write contradiction). Both were corrected under existing G2 authority as a
+> documentation-only pass. **No new authorization was granted, and G2's scope is unchanged.**
+> See `docs/05-governance/path-policy.md` and the G4 entry in `docs/05-governance/gate-model.md`.
 
 ### G3 — Fixture-Only Implementation (`implementation`)
 

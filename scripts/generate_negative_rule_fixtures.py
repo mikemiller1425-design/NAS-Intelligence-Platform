@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import pathlib
+import re
 import sys
 
 try:
@@ -25,6 +26,24 @@ except ImportError:  # pragma: no cover
 REPO = pathlib.Path(__file__).resolve().parent.parent
 POSITIVE = REPO / "config" / "rules" / "classification-rules.example.yaml"
 OUT_DIR = REPO / "tests" / "fixtures" / "rules" / "negative"
+
+
+def _live_root() -> str:
+    """The sample forbidden live root, read from the governance policy.
+
+    Read rather than embedded so this generator contains no literal live path
+    and therefore needs no Class B exemption, while the fixtures it emits still
+    carry the literal that proves the schema rejects it.
+    """
+    policy = REPO / "docs" / "05-governance" / "path-policy.md"
+    text = policy.read_text()
+    start = text.index("### Live path patterns")
+    body = text[start:]
+    end = body.find("\n### ")
+    pats = re.findall(r"^\| `(.+?)` \|", body if end == -1 else body[:end], re.M)
+    return pats[0]
+
+
 
 
 def rule(doc, rid):
@@ -102,7 +121,7 @@ CASES = [
     ("absolute-live-destination",
      "Destination templates are relative; absolute live share paths are structurally rejected.",
      lambda d: rule(d, "MEDIA-095-drone")["then"].update(
-         {"destination": "/volume1/30_DRONE/{capture_year}"})),
+         {"destination": _live_root() + "/30_DRONE/{capture_year}"})),
     ("parent-traversal-destination",
      "Parent traversal in a destination template is rejected.",
      lambda d: rule(d, "MEDIA-095-drone")["then"].update({"destination": "30_DRONE/../../etc"})),
@@ -111,7 +130,7 @@ CASES = [
      lambda d: rule(d, "MEDIA-095-drone")["then"].update({"destination": "30_DRONE/{operator_home}"})),
     ("literal-destination-root",
      "destination_root_ref must be a symbolic name, never a literal path.",
-     lambda d: d["rule_set"].update({"destination_root_ref": "/volume1/destination"})),
+     lambda d: d["rule_set"].update({"destination_root_ref": _live_root() + "/destination"})),
     ("bad-schema-version",
      "Only schema_version 1 is defined; other versions must be rejected, not coerced.",
      lambda d: d.update({"schema_version": 2})),
